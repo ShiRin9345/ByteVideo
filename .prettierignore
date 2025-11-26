@@ -1,0 +1,8 @@
+**/*/dist/
+**/*/build/
+packages/ui
+packages/eslint-config
+packages/typescript-config
+
+.cursor
+README.md

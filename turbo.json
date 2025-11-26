@@ -1,0 +1,27 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": ["DASHSCOPE_API_KEY"]
+    },
+    "lint": {
+      "dependsOn": ["^lint"],
+      "env": ["DATABASE_URL"]
+    },
+    "check-types": {
+      "dependsOn": ["^check-types"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "env": ["PORT"]
+    },
+    "start": {
+      "env": ["PORT"]
+    }
+  }
+}
