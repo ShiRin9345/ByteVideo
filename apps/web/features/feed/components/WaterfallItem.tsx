@@ -44,10 +44,11 @@ export const WaterfallCard = memo<WaterfallCardProps>(
           />
         </div>
 
-        {/* 文本内容 */}
-        <p className="text-card-foreground line-clamp-2 px-3 pt-3 pb-2 text-sm">
-          {item.text}
-        </p>
+        <div className="px-3 pt-3 pb-2">
+          <p className="text-card-foreground line-clamp-2 text-sm break-all">
+            {item.text}
+          </p>
+        </div>
 
         {/* 用户信息 */}
         <section className="flex items-center gap-2 px-3 pb-3">
