@@ -56,7 +56,7 @@ export function useVirtualScroll({
 
   const [visibleRange, setVisibleRange] = useState(getInitialRange);
   // 新增滚动状态管理
-  const scrollTimerRef = useRef<number | null>(null);
+  const scrollTimerRef = useRef<NodeJS.Timeout | null>(null);
   const SCROLL_END_DELAY = 150;
 
   // 更新可见范围（使用二分查找优化，O(log N)）
@@ -104,14 +104,14 @@ export function useVirtualScroll({
         if (scrollTimerRef.current !== null) {
           clearTimeout(scrollTimerRef.current);
         }
-        scrollTimerRef.current = window.setTimeout(() => {
+        scrollTimerRef.current = setTimeout(() => {
           onScrollingChange(false);
           scrollTimerRef.current = null;
         }, SCROLL_END_DELAY);
       }
 
       if (!ticking) {
-        window.requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
           // 只更新可见范围，不触发加载
           updateVisibleRange();
           ticking = false;

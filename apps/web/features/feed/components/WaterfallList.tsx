@@ -64,8 +64,7 @@ export function XiaohongshuWaterfall({
   return (
     <div
       ref={containerRef}
-      className="waterfall-container relative overflow-auto overflow-x-hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      style={{ height: "100%", maxWidth: "100%" }}
+      className="waterfall-container relative h-full max-w-full overflow-auto overflow-x-hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       {/* 外层容器，用于实现放大时的水平居中 */}
       <div
