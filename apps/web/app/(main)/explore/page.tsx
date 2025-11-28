@@ -127,7 +127,7 @@ export default function ExplorePage() {
       {/* 瀑布流内容 */}
       <div className="mx-auto w-full max-w-7xl overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8">
         {isLoading && items.length === 0 ? (
-          <WaterfallSkeleton />
+          <WaterfallSkeleton columnGap={30} rowGap={50} itemCount={10} />
         ) : isError ? (
           <div className="flex min-h-[400px] items-center justify-center">
             <div className="text-center">
@@ -159,7 +159,7 @@ export default function ExplorePage() {
               items={filteredAndSortedItems}
               columnGap={30}
               rowGap={50}
-              onLoadMore={hasNextPage ? handleLoadMore : undefined}
+              onLoadMore={hasNextPage ? handleLoadMore : () => {}}
               loading={isFetchingNextPage}
               onItemClick={handleCardClick}
             />

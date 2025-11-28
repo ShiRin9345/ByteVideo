@@ -25,18 +25,13 @@ export function WaterfallCardWrapper({
       width: `${position.width}px`,
       transform: `translate3d(${position.left}px, ${position.top}px, 0)`,
       transition: "transform 0.2s ease-out",
-      willChange: "transform",
     }),
     [position.left, position.top, position.width],
   );
 
   return (
     <div ref={cardRef} style={cardStyle}>
-      <WaterfallCard
-        item={item}
-        width={position.width}
-        onClick={onItemClick || (() => {})}
-      />
+      <WaterfallCard item={item} width={position.width} onClick={onItemClick} />
     </div>
   );
 }
