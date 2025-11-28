@@ -5,8 +5,6 @@ interface UseVirtualScrollOptions {
   containerRef: React.RefObject<HTMLDivElement | null>;
   itemCount: number;
   cardPositions: CardPosition[];
-  onLoadMore?: () => void;
-  threshold?: number; // 距离底部多少像素时触发加载，默认 200
   // 新增滚动状态回调
   onScrollingChange?: (scrolling: boolean) => void;
 }
@@ -45,8 +43,6 @@ export function useVirtualScroll({
   containerRef,
   itemCount,
   cardPositions,
-  onLoadMore,
-  threshold = 50,
   onScrollingChange,
 }: UseVirtualScrollOptions) {
   // 初始状态：如果没有位置信息，渲染所有项目；否则渲染前几个
@@ -59,9 +55,6 @@ export function useVirtualScroll({
   };
 
   const [visibleRange, setVisibleRange] = useState(getInitialRange);
-  const loadingRef = useRef(false);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const triggerRef = useRef<HTMLDivElement | null>(null);
   // 新增滚动状态管理
   const scrollTimerRef = useRef<number | null>(null);
   const SCROLL_END_DELAY = 150;
@@ -98,25 +91,7 @@ export function useVirtualScroll({
     setVisibleRange({ start, end });
   }, [containerRef, itemCount, cardPositions]);
 
-  // 统一的加载触发函数，确保原子性
-  const triggerLoadMore = useCallback(() => {
-    if (loadingRef.current || !onLoadMore) {
-      return false;
-    }
-
-    loadingRef.current = true;
-    onLoadMore();
-
-    // 延迟重置 loading 状态
-    // observer 保持连接，如果用户还在底部，会在 loadingRef 重置后自动触发
-    setTimeout(() => {
-      loadingRef.current = false;
-    }, 1000); // 缩短延迟时间到 500ms，让响应更快
-
-    return true;
-  }, [onLoadMore]);
-
-  // 处理滚动事件 - 只更新可见范围，不触发加载
+  // 处理滚动事件 - 只更新可见范围
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -160,54 +135,6 @@ export function useVirtualScroll({
     updateVisibleRange,
     cardPositions.length,
     onScrollingChange,
-  ]);
-
-  // 触底加载更多 - 使用 IntersectionObserver（唯一触发源）
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container || !onLoadMore || cardPositions.length === 0) return;
-
-    const handleIntersection = (entries: IntersectionObserverEntry[]) => {
-      const entry = entries[0];
-      if (entry?.isIntersecting) {
-        triggerLoadMore();
-      }
-    };
-
-    // 查找静态触发器元素
-    const trigger = container.querySelector(
-      "#waterfall-load-more-trigger",
-    ) as HTMLDivElement | null;
-
-    if (!trigger) return;
-
-    // 更新触发器位置
-    trigger.style.bottom = `${threshold}px`;
-    triggerRef.current = trigger;
-
-    // 创建并启动 IntersectionObserver
-    observerRef.current = new IntersectionObserver(handleIntersection, {
-      root: container,
-      rootMargin: "0px",
-      threshold: 0.1,
-    });
-    observerRef.current.observe(trigger);
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-      triggerRef.current = null;
-      if (scrollTimerRef.current !== null) {
-        clearTimeout(scrollTimerRef.current);
-      }
-    };
-  }, [
-    containerRef,
-    onLoadMore,
-    threshold,
-    cardPositions.length,
-    triggerLoadMore,
   ]);
 
   return visibleRange;
