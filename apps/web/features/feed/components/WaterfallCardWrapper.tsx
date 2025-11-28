@@ -1,31 +1,21 @@
 "use client";
 
-import { useRef, useEffect, useMemo } from "react";
+import { useRef, useMemo } from "react";
 import { WaterfallCard } from "./WaterfallItem";
 import type { WaterfallItem, CardPosition } from "@/features/feed/types";
 
 interface WaterfallCardWrapperProps {
   item: WaterfallItem;
   position: CardPosition;
-  index: number;
-  observeItemHeight: (index: number, element: HTMLElement | null) => void;
   onItemClick: (item: WaterfallItem) => void;
 }
 
 export function WaterfallCardWrapper({
   item,
   position,
-  index,
-  observeItemHeight,
   onItemClick,
 }: WaterfallCardWrapperProps) {
   const cardRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (cardRef.current) {
-      observeItemHeight(index, cardRef.current);
-    }
-  }, [index, observeItemHeight]);
 
   const cardStyle = useMemo(
     () => ({

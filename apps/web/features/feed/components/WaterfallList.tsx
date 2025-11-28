@@ -26,13 +26,7 @@ export function XiaohongshuWaterfall({
     });
 
   // 瀑布流布局
-  const {
-    cardPositions,
-    containerHeight,
-    observeItemHeight,
-    setScrolling,
-    columnWidth,
-  } = useWaterfallLayout({
+  const { cardPositions, containerHeight, columnWidth } = useWaterfallLayout({
     items,
     columns,
     columnGap,
@@ -49,7 +43,6 @@ export function XiaohongshuWaterfall({
     itemCount: items.length,
     cardPositions,
     onLoadMore,
-    onScrollingChange: setScrolling,
   });
 
   const visibleItems = useMemo(
@@ -99,7 +92,6 @@ export function XiaohongshuWaterfall({
           />
           {/* 渲染可见的卡片 */}
           {visibleItems.map((item, index) => {
-            const actualIndex = visibleRange.start + index;
             const position = visiblePositions[index];
             if (!position) return null;
 
@@ -108,8 +100,6 @@ export function XiaohongshuWaterfall({
                 key={item.id}
                 item={item}
                 position={position}
-                index={actualIndex}
-                observeItemHeight={observeItemHeight}
                 onItemClick={onItemClick!}
               />
             );
