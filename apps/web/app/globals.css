@@ -10,3 +10,26 @@
 .animate-shimmer {
   animation: shimmer 1.5s infinite;
 }
+
+/* 瀑布流外层容器样式 */
+.waterfall-outer-container {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.waterfall-outer-container--expanding {
+  display: flex;
+  justify-content: center;
+}
+
+.waterfall-outer-container--not-expanding {
+  display: block;
+}
+
+.waterfall-outer-container--resizing {
+  transition: none;
+}
+
+.waterfall-outer-container--not-resizing {
+  transition: all 0.2s ease-out;
+}

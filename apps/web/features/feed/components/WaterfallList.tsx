@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useMemo } from "react";
+import { cn } from "@workspace/ui/lib/utils";
 import { WaterfallCardWrapper } from "./WaterfallCardWrapper";
 import { LoadingIndicator } from "./LoadingIndicator";
 import { useResponsiveColumns } from "@/features/feed/hooks/useResponsiveColumns";
@@ -68,15 +69,17 @@ export function XiaohongshuWaterfall({
     >
       {/* 外层容器，用于实现放大时的水平居中 */}
       <div
+        className={cn(
+          "waterfall-outer-container",
+          isExpanding
+            ? "waterfall-outer-container--expanding"
+            : "waterfall-outer-container--not-expanding",
+          isResizing
+            ? "waterfall-outer-container--resizing"
+            : "waterfall-outer-container--not-resizing",
+        )}
         style={{
-          display: isExpanding ? ("flex" as const) : ("block" as const),
-          justifyContent: isExpanding
-            ? ("center" as const)
-            : ("flex-start" as const),
-          width: "100%",
           height: `${containerHeight}px`,
-          transition: isResizing ? "none" : "all 0.2s ease-out",
-          overflowX: "hidden" as const,
         }}
       >
         {/* 容器，用于绝对定位 */}
