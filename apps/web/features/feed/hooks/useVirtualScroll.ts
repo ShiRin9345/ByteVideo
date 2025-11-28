@@ -11,18 +11,16 @@ interface UseVirtualScrollOptions {
   onScrollingChange?: (scrolling: boolean) => void;
 }
 
-// 二分查找辅助函数：找到第一个满足条件的索引
-// 条件：cardBottom >= targetValue（用于查找 start）
-const findFirstIndex = (
+const lowerBound = (
   positions: CardPosition[],
-  targetValue: number,
+  target: number,
+  getValue: (pos: CardPosition) => number,
 ): number => {
   const n = positions.length;
   if (n === 0) return 0;
 
   let left = 0;
-  let right = n - 1;
-  let result = n; // 初始化为不可能值
+  let right = n - 1; // 闭区间 [left, right]
 
   while (left <= right) {
     const mid = Math.floor((left + right) / 2);
@@ -32,54 +30,15 @@ const findFirstIndex = (
       continue;
     }
 
-    const cardBottom = pos.top + pos.height;
-    if (cardBottom >= targetValue) {
-      // 找到了满足条件的，但可能不是第一个，继续向左查找
-      result = mid;
-      right = mid - 1;
+    const value = getValue(pos);
+    if (value >= target) {
+      right = mid - 1; // 范围缩小到 [left, mid-1]
     } else {
-      // cardBottom < targetValue，向右查找
-      left = mid + 1;
+      left = mid + 1; // 范围缩小到 [mid+1, right]
     }
   }
 
-  // 如果找不到（所有卡片都在目标值上方），返回第一个索引
-  return result === n ? 0 : result;
-};
-
-// 二分查找辅助函数：找到最后一个满足条件的索引
-// 条件：pos.top <= targetValue（用于查找 end）
-const findLastIndex = (
-  positions: CardPosition[],
-  targetValue: number,
-): number => {
-  const n = positions.length;
-  if (n === 0) return -1;
-
-  let left = 0;
-  let right = n - 1;
-  let result = -1; // 初始化为不可能值
-
-  while (left <= right) {
-    const mid = Math.floor((left + right) / 2);
-    const pos = positions[mid];
-    if (!pos) {
-      right = mid - 1;
-      continue;
-    }
-
-    if (pos.top <= targetValue) {
-      // 找到了满足条件的，但可能不是最后一个，继续向右查找
-      result = mid;
-      left = mid + 1;
-    } else {
-      // pos.top > targetValue，向左查找
-      right = mid - 1;
-    }
-  }
-
-  // 如果找不到（所有卡片都在目标值下方），返回最后一个索引
-  return result === -1 ? n - 1 : result;
+  return left;
 };
 
 export function useVirtualScroll({
@@ -125,22 +84,18 @@ export function useVirtualScroll({
     const viewportTop = scrollTop - buffer;
     const viewportBottom = scrollBottom + buffer;
 
-    // 使用二分查找找到第一个可见的卡片
-    // 条件：cardBottom >= viewportTop
-    const rawStart = findFirstIndex(cardPositions, viewportTop);
-    // 多渲染一个以确保平滑
-    const start = Math.max(0, rawStart > 0 ? rawStart - 1 : 0);
+    const rawStart = lowerBound(
+      cardPositions,
+      viewportTop,
+      (pos) => pos.top + pos.height,
+    );
+    const start = Math.max(0, rawStart - 1);
 
-    // 使用二分查找找到最后一个可见的卡片
-    // 条件：pos.top <= viewportBottom
-    const rawEnd = findLastIndex(cardPositions, viewportBottom);
-    // 确保不超过 itemCount，并添加缓冲
+    const rawEnd =
+      lowerBound(cardPositions, viewportBottom + 1, (pos) => pos.top) - 1;
     const end = Math.min(itemCount, rawEnd + 2);
 
-    // 确保 end 至少等于 start
-    const finalEnd = end <= start ? Math.min(itemCount, start + 1) : end;
-
-    setVisibleRange({ start, end: finalEnd });
+    setVisibleRange({ start, end });
   }, [containerRef, itemCount, cardPositions]);
 
   // 统一的加载触发函数，确保原子性
