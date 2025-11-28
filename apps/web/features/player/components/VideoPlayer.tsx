@@ -1,81 +1,41 @@
 "use client";
 
-import { useEffect, useState, useRef, useId, useMemo } from "react";
+import { useEffect, useRef } from "react";
 import Aliplayer from "aliyun-aliplayer";
 import "aliyun-aliplayer/build/skins/default/aliplayer-min.css";
 import { useKeyboardControls } from "@/features/player/hooks/useKeyboardControls";
-import { useDanmaku, DanmakuInput } from "@/features/danmaku";
 
 interface VideoPlayerProps {
-  videoId?: string;
-  videoUrl?: string;
-  playauth?: string;
-  containerId?: string;
-  width?: string | number;
-  height?: string | number;
-  autoplay?: boolean;
-  license?: {
-    key: string;
-    domain: string;
-  };
-  className?: string;
-  showDanmakuInput?: boolean;
+  videoId: string;
+  playauth: string;
 }
 
-export function VideoPlayer({
-  videoId,
-  videoUrl,
-  playauth,
-  containerId,
-  width = "100%",
-  height = "100%",
-  autoplay = true,
-  license = {
-    key: "KPMVELt3K05RmqZk752588143e5cb4d4196b5d0c928f53632",
-    domain: "bytecampvideo.top",
-  },
-  className = "",
-  showDanmakuInput = true,
-}: VideoPlayerProps) {
-  const [videoReady, setVideoReady] = useState(false);
+const DEFAULT_LICENSE = {
+  key: "KPMVELt3K05RmqZk752588143e5cb4d4196b5d0c928f53632",
+  domain: "bytecampvideo.top",
+};
+export function VideoPlayer({ videoId, playauth }: VideoPlayerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const aliplayerRef = useRef<Aliplayer | null>(null);
-  // 使用 useId 生成稳定的 ID，避免 hydration 错误
-  const playerId = useId();
 
-  // 使用 useMemo 稳定 license 对象，避免每次渲染都创建新对象
-  const stableLicense = useMemo(() => {
-    return (
-      license || {
-        key: "KPMVELt3K05RmqZk752588143e5cb4d4196b5d0c928f53632",
-        domain: "bytecampvideo.top",
-      }
-    );
-  }, [license]);
-
-  // 使用 useMemo 稳定 resolvedPlayerId
-  const resolvedPlayerId = useMemo(
-    () => containerId || `aliplayer-${playerId}`,
-    [containerId, playerId],
-  );
-
-  // 初始化 Aliplayer 并获取内部的 video 元素
   useEffect(() => {
-    // 如果没有 videoId 也没有 videoUrl，不初始化
-    if (!videoId && !videoUrl) {
+    if (!videoId || !playauth) {
       return;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const options: any = {
-      id: resolvedPlayerId,
-      license: stableLicense,
-      width,
-      height,
+      id: "aliplayer",
+      license: DEFAULT_LICENSE,
+      width: "100%",
+      height: "100%",
       useH5Prism: true,
-      autoplay,
+      autoplay: true,
       clickPause: true,
+      vid: videoId,
+      playauth: playauth,
+      encryptType: "1",
       skinLayout: [
         { name: "bigPlayButton", align: "cc" },
         { name: "H5Loading", align: "cc" },
@@ -97,38 +57,21 @@ export function VideoPlayer({
       ],
     };
 
-    // 如果使用 VOD videoId
-    if (videoId && playauth) {
-      options.vid = videoId;
-      options.playauth = playauth;
-      options.encryptType = "1";
-    }
-    // 如果使用直接 URL
-    else if (videoUrl) {
-      options.source = videoUrl;
-    }
-
     const aliplayer = new Aliplayer(options, (playerInstance) => {
       aliplayerRef.current = playerInstance;
 
-      // 通过 DOM 查询获取 Aliplayer 内部的 video 元素和容器
-      const container = document.getElementById(
-        resolvedPlayerId,
-      ) as HTMLDivElement | null;
-      if (container) {
-        containerRef.current = container;
-        const videoElement = container.querySelector(
+      // 直接从 ref 获取容器和 video 元素
+      if (containerRef.current) {
+        const videoElement = containerRef.current.querySelector(
           "video",
         ) as HTMLVideoElement | null;
         if (videoElement) {
           videoRef.current = videoElement;
-          setVideoReady(true);
         }
       }
     });
 
     return () => {
-      setVideoReady(false);
       videoRef.current = null;
       containerRef.current = null;
       aliplayerRef.current = null;
@@ -140,16 +83,7 @@ export function VideoPlayer({
         }
       }
     };
-  }, [
-    videoId,
-    videoUrl,
-    playauth,
-    stableLicense,
-    width,
-    height,
-    autoplay,
-    resolvedPlayerId,
-  ]);
+  }, [videoId, playauth]);
 
   // 启用键盘控制 - 使用 aliplayerRef 和 videoRef
   useKeyboardControls({
@@ -158,51 +92,15 @@ export function VideoPlayer({
     seekStep: 10,
   });
 
-  // 弹幕功能
-  const {
-    toggle: toggleDanmaku,
-    isEnabled: danmakuEnabled,
-    isConnected,
-    send: handleSend,
-  } = useDanmaku({
-    videoRef,
-    containerRef,
-    videoReady,
-  });
-
   return (
-    <div className={`h-full w-full ${className}`}>
+    <div className="h-full w-full">
       <section
         className="relative h-full w-full overflow-hidden bg-black"
         aria-label="视频播放器"
       >
         {/* Aliplayer 容器 */}
-        <div id={resolvedPlayerId} className="h-full w-full"></div>
-
-        {/* 弹幕控制层 - 简化版，只显示弹幕开关 */}
-        <div className="absolute right-4 bottom-4 z-10">
-          <button
-            type="button"
-            onClick={toggleDanmaku}
-            aria-label={danmakuEnabled ? "关闭弹幕" : "开启弹幕"}
-            className={`flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border-none p-2 text-white ${
-              danmakuEnabled ? "bg-black/55" : "bg-black/25"
-            }`}
-          >
-            <span
-              className={`text-xs font-bold select-none ${
-                danmakuEnabled ? "opacity-100" : "opacity-50"
-              }`}
-            >
-              弹
-            </span>
-          </button>
-        </div>
+        <div ref={containerRef} id="aliplayer" className="h-full w-full"></div>
       </section>
-
-      {showDanmakuInput && (
-        <DanmakuInput isConnected={isConnected} onSend={handleSend} />
-      )}
     </div>
   );
 }

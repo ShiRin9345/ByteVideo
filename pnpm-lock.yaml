@@ -119,9 +119,6 @@ importers:
       bcryptjs:
         specifier: ^2.4.3
         version: 2.4.3
-      danmaku:
-        specifier: ^2.0.9
-        version: 2.0.9
       drizzle-orm:
         specifier: ^0.44.7
         version: 0.44.7(@types/pg@8.15.6)(kysely@0.28.8)(pg@8.16.3)
@@ -3717,12 +3714,6 @@ packages:
         integrity: sha512-ndfJ/JxxMd3nw31uyKoY2naivF+r29V+Lc0svZxe1JvvIRmi8hUsrMvdOwgS1o6uBHmiz91geQ0ylPP0aj1VUA==,
       }
     engines: { node: ">=12" }
-
-  danmaku@2.0.9:
-    resolution:
-      {
-        integrity: sha512-K8XM3tWiKR7adbt45NgWucmFzY91eHKiLDPbeFXCZ2KWEju+3hgSIaWMkdg8dnxVTguKOc82vF/0DXm1Y02EUA==,
-      }
 
   dargs@8.1.0:
     resolution:
@@ -10275,8 +10266,6 @@ snapshots:
       d3-array: 3.2.4
 
   d3-timer@3.0.1: {}
-
-  danmaku@2.0.9: {}
 
   dargs@8.1.0: {}
 

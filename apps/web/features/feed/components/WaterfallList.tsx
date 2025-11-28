@@ -64,7 +64,7 @@ export function XiaohongshuWaterfall({
   return (
     <div
       ref={containerRef}
-      className="waterfall-container relative overflow-auto overflow-x-hidden"
+      className="waterfall-container relative overflow-auto overflow-x-hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       style={{ height: "100%", maxWidth: "100%" }}
     >
       {/* 外层容器，用于实现放大时的水平居中 */}
@@ -89,6 +89,14 @@ export function XiaohongshuWaterfall({
             height: `${containerHeight}px`,
           }}
         >
+          {/* 触底加载触发器（静态元素） */}
+          <div
+            id="waterfall-load-more-trigger"
+            className="pointer-events-none absolute h-px w-full"
+            style={{
+              bottom: "50px", // 默认值，会被 hook 动态更新
+            }}
+          />
           {/* 渲染可见的卡片 */}
           {visibleItems.map((item, index) => {
             const actualIndex = visibleRange.start + index;

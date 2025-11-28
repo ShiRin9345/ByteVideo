@@ -20,12 +20,6 @@ app.use(express.json());
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
 
-  // 监听弹幕发送事件
-  socket.on("sendDanmaku", (data) => {
-    console.log("Received danmaku:", data);
-    io.emit("receiveDanmaku", data);
-  });
-
   socket.on("disconnect", () => {
     console.log("A user disconnected:", socket.id);
   });

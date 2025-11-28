@@ -26,7 +26,6 @@
     "aliyun-aliplayer": "^2.34.6",
     "axios": "^1.13.2",
     "bcryptjs": "^2.4.3",
-    "danmaku": "^2.0.9",
     "jsonwebtoken": "^9.0.2",
     "drizzle-orm": "^0.44.7",
     "lucide-react": "^0.475.0",

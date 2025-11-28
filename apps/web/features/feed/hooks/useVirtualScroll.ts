@@ -11,12 +11,83 @@ interface UseVirtualScrollOptions {
   onScrollingChange?: (scrolling: boolean) => void;
 }
 
+// 二分查找辅助函数：找到第一个满足条件的索引
+// 条件：cardBottom >= targetValue（用于查找 start）
+const findFirstIndex = (
+  positions: CardPosition[],
+  targetValue: number,
+): number => {
+  const n = positions.length;
+  if (n === 0) return 0;
+
+  let left = 0;
+  let right = n - 1;
+  let result = n; // 初始化为不可能值
+
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+    const pos = positions[mid];
+    if (!pos) {
+      left = mid + 1;
+      continue;
+    }
+
+    const cardBottom = pos.top + pos.height;
+    if (cardBottom >= targetValue) {
+      // 找到了满足条件的，但可能不是第一个，继续向左查找
+      result = mid;
+      right = mid - 1;
+    } else {
+      // cardBottom < targetValue，向右查找
+      left = mid + 1;
+    }
+  }
+
+  // 如果找不到（所有卡片都在目标值上方），返回第一个索引
+  return result === n ? 0 : result;
+};
+
+// 二分查找辅助函数：找到最后一个满足条件的索引
+// 条件：pos.top <= targetValue（用于查找 end）
+const findLastIndex = (
+  positions: CardPosition[],
+  targetValue: number,
+): number => {
+  const n = positions.length;
+  if (n === 0) return -1;
+
+  let left = 0;
+  let right = n - 1;
+  let result = -1; // 初始化为不可能值
+
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+    const pos = positions[mid];
+    if (!pos) {
+      right = mid - 1;
+      continue;
+    }
+
+    if (pos.top <= targetValue) {
+      // 找到了满足条件的，但可能不是最后一个，继续向右查找
+      result = mid;
+      left = mid + 1;
+    } else {
+      // pos.top > targetValue，向左查找
+      right = mid - 1;
+    }
+  }
+
+  // 如果找不到（所有卡片都在目标值下方），返回最后一个索引
+  return result === -1 ? n - 1 : result;
+};
+
 export function useVirtualScroll({
   containerRef,
   itemCount,
   cardPositions,
   onLoadMore,
-  threshold = 200,
+  threshold = 50,
   onScrollingChange,
 }: UseVirtualScrollOptions) {
   // 初始状态：如果没有位置信息，渲染所有项目；否则渲染前几个
@@ -36,7 +107,7 @@ export function useVirtualScroll({
   const scrollTimerRef = useRef<number | null>(null);
   const SCROLL_END_DELAY = 150;
 
-  // 更新可见范围
+  // 更新可见范围（使用二分查找优化，O(log N)）
   const updateVisibleRange = useCallback(() => {
     const container = containerRef.current;
     if (!container || cardPositions.length === 0) {
@@ -54,37 +125,22 @@ export function useVirtualScroll({
     const viewportTop = scrollTop - buffer;
     const viewportBottom = scrollBottom + buffer;
 
-    let start = 0;
-    let end = itemCount;
+    // 使用二分查找找到第一个可见的卡片
+    // 条件：cardBottom >= viewportTop
+    const rawStart = findFirstIndex(cardPositions, viewportTop);
+    // 多渲染一个以确保平滑
+    const start = Math.max(0, rawStart > 0 ? rawStart - 1 : 0);
 
-    // 找到第一个可见的卡片
-    for (let i = 0; i < cardPositions.length; i++) {
-      const pos = cardPositions[i];
-      if (!pos) continue;
-      const cardBottom = pos.top + pos.height;
-      if (cardBottom >= viewportTop) {
-        start = Math.max(0, i - 1); // 多渲染一个以确保平滑
-        break;
-      }
-    }
-
-    // 找到最后一个可见的卡片
-    for (let i = cardPositions.length - 1; i >= 0; i--) {
-      const pos = cardPositions[i];
-      if (!pos) continue;
-      const cardBottom = pos.top + pos.height;
-      if (cardBottom >= viewportTop && pos.top <= viewportBottom) {
-        end = Math.min(itemCount, i + 1); // 确保不超过 itemCount
-        break;
-      }
-    }
+    // 使用二分查找找到最后一个可见的卡片
+    // 条件：pos.top <= viewportBottom
+    const rawEnd = findLastIndex(cardPositions, viewportBottom);
+    // 确保不超过 itemCount，并添加缓冲
+    const end = Math.min(itemCount, rawEnd + 2);
 
     // 确保 end 至少等于 start
-    if (end < start) {
-      end = Math.min(itemCount, start + 1);
-    }
+    const finalEnd = end <= start ? Math.min(itemCount, start + 1) : end;
 
-    setVisibleRange({ start, end });
+    setVisibleRange({ start, end: finalEnd });
   }, [containerRef, itemCount, cardPositions]);
 
   // 统一的加载触发函数，确保原子性
@@ -100,7 +156,7 @@ export function useVirtualScroll({
     // observer 保持连接，如果用户还在底部，会在 loadingRef 重置后自动触发
     setTimeout(() => {
       loadingRef.current = false;
-    }, 500); // 缩短延迟时间到 500ms，让响应更快
+    }, 1000); // 缩短延迟时间到 500ms，让响应更快
 
     return true;
   }, [onLoadMore]);
@@ -163,37 +219,28 @@ export function useVirtualScroll({
       }
     };
 
-    // 创建底部触发器元素
-    const trigger = document.createElement("div");
-    trigger.id = "waterfall-load-more-trigger";
-    trigger.style.height = "1px";
-    trigger.style.position = "absolute";
+    // 查找静态触发器元素
+    const trigger = container.querySelector(
+      "#waterfall-load-more-trigger",
+    ) as HTMLDivElement | null;
+
+    if (!trigger) return;
+
+    // 更新触发器位置
     trigger.style.bottom = `${threshold}px`;
-    trigger.style.width = "100%";
-    trigger.style.pointerEvents = "none";
     triggerRef.current = trigger;
 
-    // 找到内容容器并添加触发器
-    const contentContainer = container.querySelector(
-      "#waterfall-content-container",
-    );
-    if (contentContainer) {
-      contentContainer.appendChild(trigger);
-
-      observerRef.current = new IntersectionObserver(handleIntersection, {
-        root: container,
-        rootMargin: "0px",
-        threshold: 0.1,
-      });
-      observerRef.current.observe(trigger);
-    }
+    // 创建并启动 IntersectionObserver
+    observerRef.current = new IntersectionObserver(handleIntersection, {
+      root: container,
+      rootMargin: "0px",
+      threshold: 0.1,
+    });
+    observerRef.current.observe(trigger);
 
     return () => {
       if (observerRef.current) {
         observerRef.current.disconnect();
-      }
-      if (trigger.parentNode) {
-        trigger.parentNode.removeChild(trigger);
       }
       triggerRef.current = null;
       if (scrollTimerRef.current !== null) {
@@ -207,35 +254,6 @@ export function useVirtualScroll({
     cardPositions.length,
     triggerLoadMore,
   ]);
-
-  // 当 cardPositions 变化时（新数据加载完成），检查是否仍在底部
-  useEffect(() => {
-    if (cardPositions.length === 0 || !onLoadMore) return;
-
-    // 延迟检查，确保 DOM 已更新
-    const timer = setTimeout(() => {
-      const container = containerRef.current;
-      if (!container || !triggerRef.current || loadingRef.current) return;
-
-      // 检查 trigger 是否可见
-      const triggerRect = triggerRef.current.getBoundingClientRect();
-      const containerRect = container.getBoundingClientRect();
-
-      // 如果 trigger 在容器视口内，说明还在底部
-      const isVisible =
-        triggerRect.top >= containerRect.top &&
-        triggerRect.top <= containerRect.bottom &&
-        triggerRect.bottom >= containerRect.top &&
-        triggerRect.bottom <= containerRect.bottom;
-
-      if (isVisible) {
-        // 如果还在底部，触发加载
-        triggerLoadMore();
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [containerRef, cardPositions.length, onLoadMore, triggerLoadMore]);
 
   return visibleRange;
 }

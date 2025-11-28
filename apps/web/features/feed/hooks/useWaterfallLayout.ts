@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type { WaterfallItem, CardPosition } from "@/features/feed/types";
 
 // 常量
@@ -22,7 +22,9 @@ export function useWaterfallLayout({
   onItemHeightChange,
 }: UseWaterfallLayoutOptions) {
   const [cardPositions, setCardPositions] = useState<CardPosition[]>([]);
-  const [columnHeights, setColumnHeights] = useState<number[]>([]);
+  const [columnHeights, setColumnHeights] = useState<number[]>(
+    new Array(columns).fill(0),
+  );
   const itemHeightsRef = useRef<Map<number, number>>(new Map());
   const resizeObserverRef = useRef<Map<number, ResizeObserver>>(new Map());
   const updateTimerRef = useRef<number | null>(null);
@@ -33,12 +35,31 @@ export function useWaterfallLayout({
   // 计算列宽
   const columnWidth = (containerWidth - columnGap * (columns - 1)) / columns;
 
-  // 初始化列高度数组
-  useEffect(() => {
-    if (columns > 0 && columnHeights.length !== columns) {
-      setColumnHeights(new Array(columns).fill(0));
-    }
-  }, [columns, columnHeights.length]);
+  // 提取卡片高度估算逻辑（消除重复）
+  const getEstimatedHeight = useCallback(
+    (item: WaterfallItem | undefined, index: number): number => {
+      // 如果已有实际测量高度，直接使用
+      const measuredHeight = itemHeightsRef.current.get(index);
+      if (measuredHeight) {
+        return measuredHeight;
+      }
+
+      // 如果没有 item，返回 0
+      if (!item) {
+        return 0;
+      }
+
+      // 计算估算高度
+      // 文字区域估算：line-clamp-3 需要更多空间，小屏幕下可能需要 70-80px
+      // 用户信息区域（头像+用户名+点赞）：约 32px
+      const textHeight = item.text ? (columnWidth < 200 ? 80 : 70) : 0;
+      const userInfoHeight = 32; // 用户信息区域固定高度
+      const imageHeight = (columnWidth * item.height) / item.width;
+
+      return imageHeight + textHeight + userInfoHeight;
+    },
+    [columnWidth],
+  );
 
   // 计算卡片位置
   const calculatePositions = useCallback(() => {
@@ -48,13 +69,7 @@ export function useWaterfallLayout({
 
     items.forEach((item, index) => {
       // 获取卡片高度（如果已测量则使用实际高度，否则使用估算高度）
-      // 文字区域估算：line-clamp-3 需要更多空间，小屏幕下可能需要 70-80px
-      // 用户信息区域（头像+用户名+点赞）：约 32px
-      const textHeight = columnWidth < 200 ? 80 : 70;
-      const userInfoHeight = 32; // 用户信息区域固定高度
-      const itemHeight =
-        itemHeightsRef.current.get(index) ||
-        (columnWidth * item.height) / item.width + textHeight + userInfoHeight;
+      const itemHeight = getEstimatedHeight(item, index);
 
       // 找到最短的列
       let minHeight = newColumnHeights[0];
@@ -85,7 +100,7 @@ export function useWaterfallLayout({
 
     setCardPositions(newPositions);
     setColumnHeights(newColumnHeights);
-  }, [items, columns, columnGap, rowGap, containerWidth, columnWidth]);
+  }, [items, columns, columnGap, rowGap, columnWidth, getEstimatedHeight]);
 
   // 增量更新布局（只更新受影响的位置）
   const updatePositionsIncremental = useCallback(
@@ -139,14 +154,8 @@ export function useWaterfallLayout({
         for (let i = changedIndex; i < items.length; i++) {
           const item = items[i];
           if (!item) continue;
-          // 使用与 calculatePositions 一致的文字高度估算
-          const textHeight = item.text ? (columnWidth < 200 ? 80 : 70) : 0;
-          const userInfoHeight = 32; // 用户信息区域固定高度
-          const itemHeight =
-            itemHeightsRef.current.get(i) ||
-            (columnWidth * item.height) / item.width +
-              textHeight +
-              userInfoHeight;
+          // 使用统一的高度估算函数
+          const itemHeight = getEstimatedHeight(item, i);
 
           // 找到最短的列
           let minHeight = newColumnHeights[0];
@@ -179,7 +188,15 @@ export function useWaterfallLayout({
         return newPositions;
       });
     },
-    [items, columns, columnGap, rowGap, columnWidth, calculatePositions],
+    [
+      items,
+      columns,
+      columnGap,
+      rowGap,
+      columnWidth,
+      calculatePositions,
+      getEstimatedHeight,
+    ],
   );
 
   // Resize debounce 定时器
@@ -229,6 +246,12 @@ export function useWaterfallLayout({
 
     // 如果容器宽度或列数变化，触发resize debounce
     if (containerWidthChanged || columnsChanged) {
+      // 🚨【关键修复】：列宽或列数变了，之前测量的高度全部失效！必须清空！
+      // 因为列宽变化会导致图片高度按比例变化，文字换行也会变化
+      itemHeightsRef.current.clear();
+      // 注意：这里不需要 disconnect ResizeObserver，因为 DOM 元素没变，
+      // 它们调整大小后会自动触发 Observer 回调，更新为新的精确高度。
+
       handleResize();
     } else if (items.length > 0 && !isResizingRef.current) {
       // items变化且不在resize时，立即更新布局
@@ -291,7 +314,7 @@ export function useWaterfallLayout({
       itemHeightsRef.current.set(index, height);
       onItemHeightChange?.(index, height);
 
-      // 如果正在滚动，延迟更新
+      // 如果正在滚动，只添加到队列，不触发更新
       if (isScrollingRef.current) {
         pendingUpdatesRef.current.add(index);
         return;
@@ -305,16 +328,13 @@ export function useWaterfallLayout({
         window.cancelAnimationFrame(updateTimerRef.current);
       }
 
-      // 使用 requestAnimationFrame 批量更新，减少布局偏移
-      // 延迟到下一帧，确保不在滚动过程中更新
+      // 使用单次 requestAnimationFrame 批量更新，减少布局偏移
+      // 由于 flushPendingUpdates 中已经处理了滚动状态检查，这里不需要双重延迟
       updateTimerRef.current = window.requestAnimationFrame(() => {
-        // 再延迟一帧，确保滚动事件处理完成
-        updateTimerRef.current = window.requestAnimationFrame(() => {
-          if (!isScrollingRef.current) {
-            flushPendingUpdates();
-          }
-          updateTimerRef.current = null;
-        });
+        if (!isScrollingRef.current) {
+          flushPendingUpdates();
+        }
+        updateTimerRef.current = null;
       });
     },
     [onItemHeightChange, flushPendingUpdates],
@@ -331,26 +351,16 @@ export function useWaterfallLayout({
         oldObserver.disconnect();
       }
 
-      // 先设置初始高度（基于估算值），避免首次测量时的布局偏移
+      // 统一初始化高度（基于估算值），避免首次测量时的布局偏移
       const item = items[index];
-      if (item) {
-        // 使用与 calculatePositions 一致的高度估算
-        const textHeight = item.text ? (columnWidth < 200 ? 80 : 70) : 0;
-        const userInfoHeight = 32; // 用户信息区域固定高度
-        const estimatedHeight =
-          (columnWidth * item.height) / item.width +
-          textHeight +
-          userInfoHeight;
-        if (estimatedHeight > 0 && !itemHeightsRef.current.has(index)) {
-          itemHeightsRef.current.set(index, estimatedHeight);
-        }
+      const estimatedHeight = getEstimatedHeight(item, index);
+
+      // 如果还没有实际测量高度，设置估算值
+      if (estimatedHeight > 0 && !itemHeightsRef.current.has(index)) {
+        itemHeightsRef.current.set(index, estimatedHeight);
       }
 
-      const textHeight = item?.text ? (columnWidth < 200 ? 80 : 70) : 0;
-      const userInfoHeight = 32; // 用户信息区域固定高度
-      const estimatedHeight = item
-        ? (columnWidth * item.height) / item.width + textHeight + userInfoHeight
-        : 0;
+      // 使用已存储的高度或估算高度作为初始值
       let lastReportedHeight =
         itemHeightsRef.current.get(index) || estimatedHeight;
       let rafId: number | null = null;
@@ -395,7 +405,7 @@ export function useWaterfallLayout({
       observer.observe(element);
       resizeObserverRef.current.set(index, observer);
     },
-    [handleItemHeightChange, items, columnWidth],
+    [handleItemHeightChange, items, getEstimatedHeight],
   );
 
   // 暴露滚动状态控制函数
@@ -417,27 +427,34 @@ export function useWaterfallLayout({
 
   // 清理 observers 和定时器
   useEffect(() => {
+    // 保存引用，避免 cleanup 时访问到已改变的 ref
+    const observers = resizeObserverRef.current;
+    const updateTimer = updateTimerRef.current;
+    const scrollTimeout = scrollTimeoutRef.current;
+    const resizeDebounceTimer = resizeDebounceTimerRef.current;
+
     return () => {
-      resizeObserverRef.current.forEach((observer) => {
+      observers.forEach((observer) => {
         observer.disconnect();
       });
-      resizeObserverRef.current.clear();
-      if (updateTimerRef.current !== null) {
-        window.cancelAnimationFrame(updateTimerRef.current);
+      observers.clear();
+      if (updateTimer !== null) {
+        window.cancelAnimationFrame(updateTimer);
       }
-      if (scrollTimeoutRef.current !== null) {
-        window.clearTimeout(scrollTimeoutRef.current);
+      if (scrollTimeout !== null) {
+        window.clearTimeout(scrollTimeout);
       }
-      if (resizeDebounceTimerRef.current !== null) {
-        clearTimeout(resizeDebounceTimerRef.current);
-        resizeDebounceTimerRef.current = null;
+      if (resizeDebounceTimer !== null) {
+        clearTimeout(resizeDebounceTimer);
       }
     };
   }, []);
 
   // 计算容器总高度
-  const containerHeight =
-    columnHeights.length > 0 ? Math.max(...columnHeights) : 0;
+  const containerHeight = useMemo(
+    () => (columnHeights.length > 0 ? Math.max(...columnHeights) : 0),
+    [columnHeights],
+  );
 
   return {
     cardPositions,

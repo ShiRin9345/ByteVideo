@@ -39,8 +39,8 @@ function getVideoData(id: string) {
       likes: 1000,
       comments: 100,
     },
-    videoUrl:
-      "https://shirin-123.oss-cn-beijing.aliyuncs.com/vod-edb088/10d5c255c9b971f0867e1777b3cf0102/7c21552aadbae9674a867e2ac29561c4-ld.mp4?Expires=1764087930&OSSAccessKeyId=STS.NZJuTsbmgEKSYeH36rXaco7rj&Signature=UyGlH%2FAbMrfjGBZlo8uwiaIK79Q%3D&security-token=CAISzAN1q6Ft5B2yfSjIr5n%2FPu7Hj7JG8om4W0P51zYnVO5PgPLZiDz2IHhMeXlgAe0btP42nm5Q6vYZlrIqFMcYHBCVMJcttcgKoV79JoHbvNeu0bsHhZv985FH%2BdqgjqHoeOzcYI73qZ7PAgm2S0YRrJL%2BcTK9JWjHVbSClZ9gaPkOQwC8dkAoLdxKJwxk2uN4U3zKLqSNPxfmpWDSAUF02HN7kngtxqmj5cee5xHCqVDmw41toJ%2FqcLepc%2B5mPpp0T%2F6e%2BI4TcbHaggFd9z9A9qp9kNZim1H9s8qaHkNa7jifLuPQ6acPFgJiYbUgEKM29pqCnPZj6OvIjNa1mVQfJuFUSSXZAdn6m6m0EeiyZNEibuS5aTafydCOLJjz9lp%2BOjVZFnsTJIJ8cyMhVEBxEW2HevL7wj2QPFf%2FEZri%2BbotzJ94w2%2Fv%2Bde3PFWVS92bq31AYsJsPxt1akRMhDa%2FKvNWKBYwWldmFquTc6JfQB1QoL7soTfVUiBwcaX0S0E%2FsZg804FoiuWXNvouueJ178RaPdTf8vrdfxO%2FWGbVhV2UUDdsqt3JE7WRBkEL7hv9b4CIRF4plNv0f96zywjJfRd6SUtVjpExaFPFk6y5GoABkBXU9ruuEMVDPQ5fKAcxniEq6ddtBmt1aKjkH%2BF6KgrbB68K%2B04sLhDoec2JxaiQjRI%2Bxa69cQzJU7T%2BGW%2Bz1kmOSQ5Y%2BcQ27e7IEfkEuwgZ34HpO4zqY63ZUIj4Qkpy98WMkY6sVtoeBLpmuvTDQKNoVL6TfHaAufj%2BDOxWghkgAA%3D%3D",
+    videoId: "10d5c255c9b971f0867e1777b3cf0102",
+    playauth: "mock-playauth-token",
     publishTime: "11-12",
     location: "陕西",
   };
@@ -76,14 +76,16 @@ function getComments() {
   ];
 }
 
-function VideoPlayerComponent({ videoUrl }: { videoUrl: string }) {
+function VideoPlayerComponent({
+  videoId,
+  playauth,
+}: {
+  videoId: string;
+  playauth: string;
+}) {
   return (
     <div className="aspect-video w-full">
-      <VideoPlayer
-        videoUrl={videoUrl}
-        showDanmakuInput={false}
-        className="h-full w-full"
-      />
+      <VideoPlayer videoId={videoId} playauth={playauth} />
     </div>
   );
 }
@@ -123,7 +125,10 @@ export default function VideoWatchPage() {
 
         {/* 视频播放器 */}
         <div className="w-full bg-black">
-          <VideoPlayerComponent videoUrl={videoData.videoUrl} />
+          <VideoPlayerComponent
+            videoId={videoData.videoId}
+            playauth={videoData.playauth}
+          />
         </div>
 
         {/* 视频信息 */}
@@ -249,7 +254,10 @@ export default function VideoWatchPage() {
 
               {/* 视频播放器 */}
               <div className="w-full overflow-hidden rounded-lg bg-black">
-                <VideoPlayerComponent videoUrl={videoData.videoUrl} />
+                <VideoPlayerComponent
+                  videoId={videoData.videoId}
+                  playauth={videoData.playauth}
+                />
               </div>
 
               {/* 视频信息 */}

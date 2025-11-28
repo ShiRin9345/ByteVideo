@@ -39,7 +39,6 @@ byte-short-video-mono/
 - **数据请求**: TanStack Query (React Query)
 - **表单**: TanStack Form + Zod
 - **视频播放**: 阿里云 AliPlayer
-- **弹幕**: danmaku.js
 - **图表**: Recharts
 
 ### 后端
@@ -186,11 +185,6 @@ pnpm db:studio
 - 视频上传（支持阿里云 OSS）
 - 视频编辑和删除
 - 视频分类管理
-
-### 弹幕系统 (`apps/web/features/danmaku`)
-- 实时弹幕发送和接收
-- Socket.io 实时通信
-- 弹幕渲染和动画
 
 ### AI 相关 (`apps/web/features/ai`)
 - 视频内容分析

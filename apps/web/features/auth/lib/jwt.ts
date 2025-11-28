@@ -3,8 +3,8 @@ import { createHash } from "crypto";
 
 const JWT_SECRET: string =
   process.env.JWT_SECRET || "your-secret-key-change-in-production";
-const ACCESS_TOKEN_EXPIRY = process.env.JWT_ACCESS_TOKEN_EXPIRY || "15m";
-const REFRESH_TOKEN_EXPIRY = process.env.JWT_REFRESH_TOKEN_EXPIRY || "7d";
+const ACCESS_TOKEN_EXPIRY = process.env.JWT_ACCESS_TOKEN_EXPIRY || "900";
+const REFRESH_TOKEN_EXPIRY = process.env.JWT_REFRESH_TOKEN_EXPIRY || "604800";
 
 export interface TokenPayload {
   userId: string;
