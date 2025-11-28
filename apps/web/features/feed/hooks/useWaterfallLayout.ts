@@ -11,6 +11,7 @@ interface UseWaterfallLayoutOptions {
   rowGap: number;
   containerWidth: number;
 }
+
 export function useWaterfallLayout({
   items,
   columns,
@@ -18,13 +19,42 @@ export function useWaterfallLayout({
   rowGap,
   containerWidth,
 }: UseWaterfallLayoutOptions) {
+  // 1. 状态管理
   const [cardPositions, setCardPositions] = useState<CardPosition[]>([]);
-  const [columnHeights, setColumnHeights] = useState<number[]>(
-    new Array(columns).fill(0),
-  );
+  // 这是一个用来渲染 UI 的高度状态
+  const [containerHeight, setContainerHeight] = useState(0);
+
+  // 2. 缓存层：记录"上一次计算完"的状态，用于增量计算
+  // 使用 useRef 因为我们不想这些数据的变动触发重渲染，它们只是计算的中间态
+  const cacheRef = useRef<{
+    columnHeights: number[]; // 记录每一列当前的底部高度
+    positions: CardPosition[]; // 记录所有已计算好的卡片位置
+    processedCount: number; // 记录处理了多少个 item
+  }>({
+    columnHeights: [],
+    positions: [],
+    processedCount: 0,
+  });
+
+  // 辅助 ref：记录上一次的布局依赖，用于判断是否需要"全量重置"
+  const layoutDepsRef = useRef({
+    containerWidth,
+    columns,
+    columnGap,
+    rowGap,
+  });
+
+  // 使用 ref 存储 items，避免 calculatePositions 依赖整个数组
+  const itemsRef = useRef(items);
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
 
   // 计算列宽
-  const columnWidth = (containerWidth - columnGap * (columns - 1)) / columns;
+  const columnWidth = useMemo(
+    () => (containerWidth - columnGap * (columns - 1)) / columns,
+    [containerWidth, columnGap, columns],
+  );
 
   // 计算卡片高度估算
   const getEstimatedHeight = useCallback(
@@ -35,10 +65,8 @@ export function useWaterfallLayout({
       }
 
       // 计算估算高度
-      // 文字区域估算：line-clamp-3 需要更多空间，小屏幕下可能需要 70-80px
-      // 用户信息区域（头像+用户名+点赞）：约 32px
       const textHeight = item.text ? (columnWidth < 200 ? 80 : 70) : 0;
-      const userInfoHeight = 32; // 用户信息区域固定高度
+      const userInfoHeight = 36; // 用户信息区域固定高度
       const imageHeight = (columnWidth * item.height) / item.width;
 
       return imageHeight + textHeight + userInfoHeight;
@@ -46,32 +74,67 @@ export function useWaterfallLayout({
     [columnWidth],
   );
 
-  // 计算卡片位置
+  // 3. 核心计算逻辑
   const calculatePositions = useCallback(() => {
-    // 每次重新计算时，都从0开始
-    const newColumnHeights = new Array(columns).fill(0);
-    const newPositions: CardPosition[] = [];
+    // 通过 ref 获取最新的 items，避免依赖整个数组
+    const currentItems = itemsRef.current;
 
-    items.forEach((item) => {
-      // 获取卡片高度（使用估算高度）
+    // 检查是否需要重置缓存 (当布局参数变化时)
+    const isLayoutChanged =
+      layoutDepsRef.current.containerWidth !== containerWidth ||
+      layoutDepsRef.current.columns !== columns ||
+      layoutDepsRef.current.columnGap !== columnGap ||
+      layoutDepsRef.current.rowGap !== rowGap;
+
+    // 检查是否是数据重置 (例如下拉刷新，新数据比老数据少，或者完全变了)
+    // 简单判断：如果当前 items 数量小于已处理的数量，说明列表被重置了
+    const isDataReset = currentItems.length < cacheRef.current.processedCount;
+
+    let startHeights: number[];
+    let startPositions: CardPosition[];
+    let startIndex: number;
+
+    if (isLayoutChanged || isDataReset) {
+      // 重置缓存
+      startHeights = new Array(columns).fill(0);
+      startPositions = [];
+      startIndex = 0;
+
+      // 更新布局依赖记录
+      layoutDepsRef.current = { containerWidth, columns, columnGap, rowGap };
+    } else {
+      // 接着上一次的结果继续算
+      startHeights = [...cacheRef.current.columnHeights];
+      startPositions = [...cacheRef.current.positions];
+      startIndex = cacheRef.current.processedCount;
+    }
+
+    // 开始遍历 (从 startIndex 开始)
+    for (let i = startIndex; i < currentItems.length; i++) {
+      const item = currentItems[i];
+      if (!item) continue;
+
       const itemHeight = getEstimatedHeight(item);
 
-      // 找到最短的列
-      let minHeight = newColumnHeights[0];
+      // 找到目前高度最小的那一列
+      if (startHeights.length === 0 || columns === 0) continue;
+
+      let minHeight = startHeights[0] ?? 0;
       let minIndex = 0;
-      for (let i = 1; i < columns; i++) {
-        if (newColumnHeights[i] < minHeight) {
-          minHeight = newColumnHeights[i];
-          minIndex = i;
+
+      for (let j = 1; j < columns; j++) {
+        const currentHeight = startHeights[j] ?? 0;
+        if (currentHeight < minHeight) {
+          minHeight = currentHeight;
+          minIndex = j;
         }
       }
 
-      // 计算位置
-      // 确保 rowGap 精确应用：第一行 top = 0，后续行 top = 列高度 + rowGap
+      // 计算当前卡片位置
+      const top = minHeight + (minHeight === 0 ? 0 : rowGap); // 第一行不需要 rowGap
       const left = minIndex * (columnWidth + columnGap);
-      const top = minHeight + rowGap;
 
-      newPositions.push({
+      startPositions.push({
         top,
         left,
         width: columnWidth,
@@ -79,91 +142,80 @@ export function useWaterfallLayout({
         columnIndex: minIndex,
       });
 
-      // 更新列高度：top + itemHeight 确保下一个卡片的位置精确
-      newColumnHeights[minIndex] = top + itemHeight;
-    });
-
-    setCardPositions(newPositions);
-    setColumnHeights(newColumnHeights);
-  }, [items, columns, columnGap, rowGap, columnWidth, getEstimatedHeight]);
-
-  // Resize debounce 定时器
-  const resizeDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const isResizingRef = useRef(false);
-  const isInitialMountRef = useRef(true);
-  const prevContainerWidthRef = useRef(containerWidth);
-  const prevColumnsRef = useRef(columns);
-
-  // 清理 resize 定时器
-  const clearResizeTimer = useCallback(() => {
-    if (resizeDebounceTimerRef.current) {
-      clearTimeout(resizeDebounceTimerRef.current);
-      resizeDebounceTimerRef.current = null;
+      // 更新该列高度
+      startHeights[minIndex] = top + itemHeight;
     }
-  }, []);
 
-  // 处理resize的逻辑（debounce延迟执行）
-  const handleResize = useCallback(() => {
-    isResizingRef.current = true;
-    clearResizeTimer();
+    // 更新缓存
+    cacheRef.current = {
+      columnHeights: startHeights,
+      positions: startPositions,
+      processedCount: currentItems.length,
+    };
 
-    // 延迟执行布局更新（如果resize停止）
-    resizeDebounceTimerRef.current = setTimeout(() => {
-      isResizingRef.current = false;
-      calculatePositions();
-      resizeDebounceTimerRef.current = null;
-    }, RESIZE_DEBOUNCE_DELAY);
-  }, [calculatePositions, clearResizeTimer]);
+    // 更新 State 触发渲染
+    setCardPositions(startPositions);
+    setContainerHeight(Math.max(...startHeights, 0));
+  }, [
+    columns,
+    columnGap,
+    rowGap,
+    columnWidth,
+    containerWidth,
+    getEstimatedHeight,
+  ]);
 
-  // 统一处理布局更新：监听 containerWidth、columns 和 items 的变化
+  // Resize 处理逻辑 (防抖)
+  const resizeTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isInitialMountRef = useRef(true);
+
+  // 监听依赖变化
   useEffect(() => {
-    const containerWidthChanged =
-      prevContainerWidthRef.current !== containerWidth;
-    const columnsChanged = prevColumnsRef.current !== columns;
-
     // 首次加载时，立即更新布局
     if (isInitialMountRef.current) {
       isInitialMountRef.current = false;
       if (items.length > 0) {
         calculatePositions();
       }
-      prevContainerWidthRef.current = containerWidth;
-      prevColumnsRef.current = columns;
       return;
     }
 
-    // 如果容器宽度或列数变化，触发resize debounce
-    if (containerWidthChanged || columnsChanged) {
-      handleResize();
-    } else if (items.length > 0 && !isResizingRef.current) {
-      // items变化且不在resize时，立即更新布局
+    // 如果是 Resize 导致的 containerWidth 变化，我们需要防抖
+    // 但因为 calculatePositions 内部有 diff 逻辑，我们可以简化这里的处理
+
+    if (resizeTimerRef.current) clearTimeout(resizeTimerRef.current);
+
+    // 如果只是 items 增加（增量更新），不需要防抖，为了用户体验应该立即计算
+    const isIncremental =
+      items.length > cacheRef.current.processedCount &&
+      layoutDepsRef.current.containerWidth === containerWidth &&
+      layoutDepsRef.current.columns === columns;
+
+    if (isIncremental) {
       calculatePositions();
+    } else {
+      // 布局变化（如窗口大小改变），使用防抖避免频繁重绘
+      resizeTimerRef.current = setTimeout(() => {
+        calculatePositions();
+      }, RESIZE_DEBOUNCE_DELAY);
     }
+    console.log("calculate");
 
-    prevContainerWidthRef.current = containerWidth;
-    prevColumnsRef.current = columns;
-  }, [containerWidth, columns, items.length, handleResize, calculatePositions]);
-
-  // 清理 resize 定时器
-  useEffect(() => {
-    const resizeDebounceTimer = resizeDebounceTimerRef.current;
     return () => {
-      if (resizeDebounceTimer !== null) {
-        clearTimeout(resizeDebounceTimer);
-      }
+      if (resizeTimerRef.current) clearTimeout(resizeTimerRef.current);
     };
-  }, []);
-
-  // 计算容器总高度
-  const containerHeight = useMemo(
-    () => (columnHeights.length > 0 ? Math.max(...columnHeights) : 0),
-    [columnHeights],
-  );
+  }, [
+    items.length,
+    containerWidth,
+    columns,
+    columnGap,
+    rowGap,
+    calculatePositions,
+  ]);
 
   return {
     cardPositions,
-    columnHeights,
+    containerHeight, // 直接返回计算好的总高度
     columnWidth,
-    containerHeight,
   };
 }

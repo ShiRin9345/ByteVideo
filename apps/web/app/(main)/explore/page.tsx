@@ -159,8 +159,9 @@ export default function ExplorePage() {
               items={filteredAndSortedItems}
               columnGap={30}
               rowGap={50}
-              onLoadMore={hasNextPage ? handleLoadMore : () => {}}
+              onLoadMore={handleLoadMore}
               loading={isFetchingNextPage}
+              hasMore={hasNextPage}
               onItemClick={handleCardClick}
             />
           </div>

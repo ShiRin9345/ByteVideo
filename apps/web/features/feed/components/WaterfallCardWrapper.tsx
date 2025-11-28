@@ -23,6 +23,7 @@ export function WaterfallCardWrapper({
       left: 0,
       top: 0,
       width: `${position.width}px`,
+      willChange: "transform",
       transform: `translate3d(${position.left}px, ${position.top}px, 0)`,
       transition: "transform 0.2s ease-out",
     }),

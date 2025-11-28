@@ -1,61 +1,48 @@
 import { useEffect, useRef } from "react";
 
 interface UseInfiniteScrollOptions {
-  containerRef: React.RefObject<HTMLDivElement | null>;
   onLoadMore?: () => void;
-  isFetching: boolean; // 必须由外部传入当前是否正在请求
+  isFetching: boolean;
+  // 增加一个 hasMore 状态，如果没有更多数据了，就不需要监听了
+  hasMore?: boolean;
 }
 
 export function useInfiniteScroll({
-  containerRef,
   onLoadMore,
-  isFetching, // 接收外部状态
+  isFetching,
+  hasMore = true,
 }: UseInfiniteScrollOptions) {
-  // 使用 ref 存储最新的回调函数和状态，避免依赖项变化导致 Observer 重建
-  const onLoadMoreRef = useRef(onLoadMore);
-  const isFetchingRef = useRef(isFetching);
-
-  // 同步 ref 的值
-  useEffect(() => {
-    onLoadMoreRef.current = onLoadMore;
-    isFetchingRef.current = isFetching;
-  }, [onLoadMore, isFetching]);
+  // 1. 创建容器 ref，用于作为 IntersectionObserver 的 root
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  // 2. 创建一个专门给触发元素（底部的 Loading 条）用的 ref
+  const triggerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    const trigger = triggerRef.current;
     const container = containerRef.current;
-    if (!container || !onLoadMoreRef.current) return;
 
-    const handleIntersection = (entries: IntersectionObserverEntry[]) => {
-      const entry = entries[0];
-      if (!entry) return;
+    // 如果没有元素，或者正在加载，或者没数据了，直接不监听
+    if (!trigger || !container || isFetching || !hasMore || !onLoadMore) return;
 
-      // 使用 ref 获取最新值，避免闭包陷阱
-      const currentIsFetching = isFetchingRef.current;
-      const currentOnLoadMore = onLoadMoreRef.current;
-
-      if (entry.isIntersecting && !currentIsFetching && currentOnLoadMore) {
-        currentOnLoadMore();
-      }
-    };
-
-    // 查找静态触发器元素
-    const trigger = container.querySelector(
-      "#waterfall-load-more-trigger",
-    ) as HTMLDivElement | null;
-
-    if (!trigger) return;
-
-    // 创建并启动 IntersectionObserver
-    const observer = new IntersectionObserver(handleIntersection, {
-      root: container,
-      rootMargin: "0px",
-      threshold: 0.1,
-    });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry?.isIntersecting) {
+          onLoadMore();
+        }
+      },
+      {
+        root: container, // 使用容器作为 root
+        threshold: 0.1,
+      },
+    );
 
     observer.observe(trigger);
 
     return () => {
       observer.disconnect();
     };
-  }, [containerRef]);
+  }, [isFetching, hasMore, onLoadMore]);
+
+  return { containerRef, triggerRef };
 }

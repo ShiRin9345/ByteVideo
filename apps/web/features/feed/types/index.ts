@@ -24,8 +24,9 @@ export interface XiaohongshuWaterfallProps {
   columnGap?: number; // 列间距，默认 16
   rowGap?: number; // 行间距，默认 16
   columns?: number; // 固定列数，如果不提供则自动计算
-  onLoadMore: () => void; // 触底加载更多回调
+  onLoadMore?: () => void; // 触底加载更多回调
   loading?: boolean; // 是否正在加载
+  hasMore?: boolean; // 是否还有更多数据
   onItemClick?: (item: WaterfallItem) => void; // 点击卡片回调
   className?: string; // 容器类名
 }

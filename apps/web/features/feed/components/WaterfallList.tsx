@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useMemo } from "react";
 import { cn } from "@workspace/ui/lib/utils";
 import { WaterfallCardWrapper } from "./WaterfallCardWrapper";
 import { LoadingIndicator } from "./LoadingIndicator";
@@ -16,9 +16,17 @@ export function XiaohongshuWaterfall({
   rowGap = 8,
   onLoadMore,
   loading = false,
+  hasMore = true,
   onItemClick,
 }: XiaohongshuWaterfallProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  console.log("render");
+
+  // 无限滚动（触底加载）- 返回 containerRef 和 triggerRef
+  const { containerRef, triggerRef } = useInfiniteScroll({
+    onLoadMore,
+    isFetching: loading, // 传入外部管理的 loading 状态
+    hasMore, // 是否还有更多数据
+  });
 
   // 响应式列数计算和容器宽度管理
   const { columns, containerWidth, isResizing, isExpanding } =
@@ -44,13 +52,6 @@ export function XiaohongshuWaterfall({
     containerRef,
     itemCount: items.length,
     cardPositions,
-  });
-
-  // 无限滚动（触底加载）
-  useInfiniteScroll({
-    containerRef,
-    onLoadMore,
-    isFetching: loading, // 传入外部管理的 loading 状态
   });
 
   const visibleItems = useMemo(
@@ -93,7 +94,7 @@ export function XiaohongshuWaterfall({
         >
           {/* 触底加载触发器（静态元素） */}
           <div
-            id="waterfall-load-more-trigger"
+            ref={triggerRef}
             className="pointer-events-none absolute bottom-[50px] h-px w-full"
           />
           {/* 渲染可见的卡片 */}
