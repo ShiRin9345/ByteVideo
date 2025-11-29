@@ -1,7 +1,6 @@
-import { useInfiniteQuery, useQueries } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { WaterfallItem } from "@/features/feed/types";
-import { dynamicBlurDataUrl } from "@/features/feed/utils/dynamicBlurDataUrl";
 
 interface UseWaterfallDataOptions {
   pageSize?: number;
@@ -12,9 +11,9 @@ interface UseWaterfallDataOptions {
 const categories = [
   "推荐",
   "穿搭",
-  "美食",
-  "彩妆",
-  "影视",
+  "穿搭",
+  "穿搭",
+  "穿搭",
   "职场",
   "情感",
   "家居",
@@ -122,39 +121,10 @@ export function useWaterfallData({
   });
 
   // 扁平化所有页面的数据
-  const rawItems = useMemo(
+  const items = useMemo(
     () => query.data?.pages.flatMap((page) => page.items) ?? [],
     [query.data?.pages],
   );
-
-  // 使用 useQueries 异步生成 blurDataURL（不阻塞主数据加载）
-  const blurQueries = useQueries({
-    queries: rawItems.map((item) => ({
-      queryKey: ["blur-data-url", item.image],
-      queryFn: async () => {
-        try {
-          return await dynamicBlurDataUrl(item.image);
-        } catch (error) {
-          console.warn(
-            `Failed to generate blurDataURL for ${item.image}:`,
-            error,
-          );
-          return undefined;
-        }
-      },
-      enabled: !!item.image && !item.blurDataURL, // 如果已有 blurDataURL 则跳过
-      staleTime: Infinity, // blurDataURL 不会过期
-      gcTime: 24 * 60 * 60 * 1000, // 24 小时缓存
-    })),
-  });
-
-  // 合并 blurDataURL 到 items
-  const items = useMemo(() => {
-    return rawItems.map((item, index) => ({
-      ...item,
-      blurDataURL: item.blurDataURL || blurQueries[index]?.data,
-    }));
-  }, [rawItems, blurQueries]);
   return {
     items,
     isLoading: query.isLoading,

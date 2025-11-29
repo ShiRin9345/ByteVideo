@@ -7,13 +7,11 @@ import type { WaterfallItem, CardPosition } from "@/features/feed/types";
 interface WaterfallCardWrapperProps {
   item: WaterfallItem;
   position: CardPosition;
-  onItemClick: (item: WaterfallItem) => void;
 }
 
 export function WaterfallCardWrapper({
   item,
   position,
-  onItemClick,
 }: WaterfallCardWrapperProps) {
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -32,7 +30,7 @@ export function WaterfallCardWrapper({
 
   return (
     <div ref={cardRef} style={cardStyle}>
-      <WaterfallCard item={item} width={position.width} onClick={onItemClick} />
+      <WaterfallCard item={item} width={position.width} />
     </div>
   );
 }

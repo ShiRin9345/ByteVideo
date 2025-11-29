@@ -86,7 +86,7 @@ export function useWaterfallLayout({
       layoutDepsRef.current.columnGap !== columnGap ||
       layoutDepsRef.current.rowGap !== rowGap;
 
-    // 检查是否是数据重置 (例如下拉刷新，新数据比老数据少，或者完全变了)
+    // 检查是否是数据重置 (例如筛选后数据减少，或者完全变了)
     // 简单判断：如果当前 items 数量小于已处理的数量，说明列表被重置了
     const isDataReset = currentItems.length < cacheRef.current.processedCount;
 
@@ -95,6 +95,7 @@ export function useWaterfallLayout({
     let startIndex: number;
 
     if (isLayoutChanged || isDataReset) {
+      // === 全量计算模式 ===
       // 重置缓存
       startHeights = new Array(columns).fill(0);
       startPositions = [];
@@ -103,10 +104,16 @@ export function useWaterfallLayout({
       // 更新布局依赖记录
       layoutDepsRef.current = { containerWidth, columns, columnGap, rowGap };
     } else {
+      // === 增量计算模式 ===
       // 接着上一次的结果继续算
       startHeights = [...cacheRef.current.columnHeights];
       startPositions = [...cacheRef.current.positions];
       startIndex = cacheRef.current.processedCount;
+    }
+
+    // 如果没有新数据需要计算，直接返回（避免重复 set state）
+    if (startIndex >= currentItems.length && !isLayoutChanged && !isDataReset) {
+      return;
     }
 
     // 开始遍历 (从 startIndex 开始)
@@ -181,7 +188,6 @@ export function useWaterfallLayout({
     }
 
     // 如果是 Resize 导致的 containerWidth 变化，我们需要防抖
-    // 但因为 calculatePositions 内部有 diff 逻辑，我们可以简化这里的处理
 
     if (resizeTimerRef.current) clearTimeout(resizeTimerRef.current);
 
@@ -199,7 +205,6 @@ export function useWaterfallLayout({
         calculatePositions();
       }, RESIZE_DEBOUNCE_DELAY);
     }
-    console.log("calculate");
 
     return () => {
       if (resizeTimerRef.current) clearTimeout(resizeTimerRef.current);
@@ -215,7 +220,7 @@ export function useWaterfallLayout({
 
   return {
     cardPositions,
-    containerHeight, // 直接返回计算好的总高度
+    containerHeight,
     columnWidth,
   };
 }

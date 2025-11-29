@@ -27,7 +27,6 @@ export interface XiaohongshuWaterfallProps {
   onLoadMore?: () => void; // 触底加载更多回调
   loading?: boolean; // 是否正在加载
   hasMore?: boolean; // 是否还有更多数据
-  onItemClick?: (item: WaterfallItem) => void; // 点击卡片回调
   className?: string; // 容器类名
 }
 

@@ -17,10 +17,7 @@ export function XiaohongshuWaterfall({
   onLoadMore,
   loading = false,
   hasMore = true,
-  onItemClick,
 }: XiaohongshuWaterfallProps) {
-  console.log("render");
-
   // 无限滚动（触底加载）- 返回 containerRef 和 triggerRef
   const { containerRef, triggerRef } = useInfiniteScroll({
     onLoadMore,
@@ -107,7 +104,6 @@ export function XiaohongshuWaterfall({
                 key={item.id}
                 item={item}
                 position={position}
-                onItemClick={onItemClick!}
               />
             );
           })}

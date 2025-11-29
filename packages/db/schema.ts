@@ -4,13 +4,10 @@ import {
   timestamp,
   boolean,
   integer,
-  pgEnum,
   index,
   unique,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-
-// ==================== 认证相关表 ====================
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -42,28 +39,16 @@ export const refreshToken = pgTable(
   ],
 );
 
-// ==================== 视频相关表 ====================
-
-// 视频主题枚举（根据需求文档）
-export const videoThemeEnum = pgEnum("video_theme", [
-  "生活",
-  "美食",
-  "旅行",
-  "科技",
-  "娱乐",
-]);
-
-// 视频表
 export const video = pgTable(
   "video",
   {
     id: text("id").primaryKey(),
     name: text("name").notNull(), // 视频名称
-    theme: videoThemeEnum("theme").notNull(), // 主题
+    theme: text("theme").array().notNull(), // 主题（用户自定义标签数组）
     description: text("description"), // 描述
-    tags: text("tags"), // 标签，存储为逗号分隔的字符串
-    videoUrl: text("video_url").notNull(), // 视频URL
-    thumbnailUrl: text("thumbnail_url"), // 缩略图URL
+    tags: text("tags").array(), // 标签数组
+    videoId: text("video_id").notNull(), // 视频ID
+    coverUrl: text("cover_url"), // 封面图URL
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }), // 作者ID
@@ -72,12 +57,10 @@ export const video = pgTable(
     comments: integer("comments").notNull().default(0), // 评论数
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
-    publishedAt: timestamp("published_at"), // 发布时间
   },
   (table) => [
     index("video_user_id_idx").on(table.userId),
     index("video_theme_idx").on(table.theme),
-    index("video_published_at_idx").on(table.publishedAt),
   ],
 );
 

@@ -1,16 +1,12 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useCallback, useMemo } from "react";
 import { Search } from "lucide-react";
 import { XiaohongshuWaterfall } from "@/features/feed/components/WaterfallList";
 import { useWaterfallData } from "@/features/feed/hooks/useWaterfallData";
 import { WaterfallSkeleton } from "@/features/feed/components/WaterfallSkeleton";
 import { Input } from "@workspace/ui/components/input";
 import { Button } from "@workspace/ui/components/button";
-import type { WaterfallItem } from "@/features/feed/types";
-import { useAuth } from "@/features/auth";
-import { LoginDialog } from "@/components/login-dialog";
 
 // 分类列表
 const categories = [
@@ -30,11 +26,8 @@ const categories = [
 type Category = (typeof categories)[number];
 
 export default function ExplorePage() {
-  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<Category>("推荐");
-  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
-  const { isAuthenticated } = useAuth();
 
   const {
     items,
@@ -51,36 +44,26 @@ export default function ExplorePage() {
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const handleCardClick = useCallback(
-    (item: WaterfallItem) => {
-      // 检查用户是否登录
-      if (!isAuthenticated) {
-        setLoginDialogOpen(true);
-        return;
+  // 过滤和排序数据（使用 useMemo 避免每次渲染都创建新数组）
+  const filteredAndSortedItems = useMemo(() => {
+    return items.filter((item) => {
+      // 分类筛选
+      if (selectedCategory !== "推荐") {
+        const itemCategory = (item as { category?: string }).category;
+        if (itemCategory !== selectedCategory) {
+          return false;
+        }
       }
-      router.push(`/explore/${item.id}`);
-    },
-    [router, isAuthenticated],
-  );
 
-  // 过滤和排序数据
-  const filteredAndSortedItems = items.filter((item) => {
-    // 分类筛选
-    if (selectedCategory !== "推荐") {
-      const itemCategory = (item as { category?: string }).category;
-      if (itemCategory !== selectedCategory) {
-        return false;
-      }
-    }
-
-    // 搜索筛选
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      item.text?.toLowerCase().includes(query) ||
-      String(item.id).includes(query)
-    );
-  });
+      // 搜索筛选
+      if (!searchQuery) return true;
+      const query = searchQuery.toLowerCase();
+      return (
+        item.text?.toLowerCase().includes(query) ||
+        String(item.id).includes(query)
+      );
+    });
+  }, [items, selectedCategory, searchQuery]);
 
   return (
     <div className="bg-background min-h-screen overflow-x-hidden">
@@ -156,20 +139,17 @@ export default function ExplorePage() {
         ) : (
           <div className="h-[calc(100vh-200px)] overflow-x-hidden">
             <XiaohongshuWaterfall
+              key={`${selectedCategory}-${searchQuery}`}
               items={filteredAndSortedItems}
               columnGap={30}
               rowGap={50}
               onLoadMore={handleLoadMore}
               loading={isFetchingNextPage}
               hasMore={hasNextPage}
-              onItemClick={handleCardClick}
             />
           </div>
         )}
       </div>
-
-      {/* Login Dialog */}
-      <LoginDialog open={loginDialogOpen} onOpenChange={setLoginDialogOpen} />
     </div>
   );
 }
