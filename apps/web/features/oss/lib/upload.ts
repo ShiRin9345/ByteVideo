@@ -7,26 +7,6 @@ import {
 import { getSTSCredentials } from "../api/sts";
 import { isCredentialsExpired } from "./credentials";
 
-declare global {
-  interface Window {
-    OSS?: new (config: {
-      bucket: string;
-      region: string;
-      accessKeyId: string;
-      accessKeySecret: string;
-      stsToken: string;
-    }) => {
-      put: (
-        fileName: string,
-        file: File,
-        options?: {
-          progress?: (progress: number) => void;
-        },
-      ) => Promise<{ url?: string }>;
-    };
-  }
-}
-
 /**
  * 上传文件到 OSS
  * @param file 要上传的文件

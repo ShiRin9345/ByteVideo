@@ -49,6 +49,8 @@ export const video = pgTable(
     tags: text("tags").array(), // 标签数组
     videoId: text("video_id").notNull(), // 视频ID
     coverUrl: text("cover_url"), // 封面图URL
+    coverWidth: integer("cover_width"), // 封面图宽度
+    coverHeight: integer("cover_height"), // 封面图高度
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }), // 作者ID

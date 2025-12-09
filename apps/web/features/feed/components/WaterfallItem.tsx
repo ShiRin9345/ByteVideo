@@ -49,7 +49,7 @@ export const WaterfallCard = memo<WaterfallCardProps>(({ item, width }) => {
           className={`image-fade-in h-full w-full object-cover ${
             imageLoaded ? "image-loaded" : ""
           }`}
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          priority
           onLoad={() => setImageLoaded(true)}
         />
       </div>

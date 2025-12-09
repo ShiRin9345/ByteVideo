@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import dynamic from "next/dynamic";
 import {
   Card,
   CardContent,
@@ -34,6 +34,25 @@ import {
   generateSingleVideoData,
   generateVideoList,
 } from "@/features/ai";
+
+// 动态导入 recharts 组件（大型图表库）
+const LineChart = dynamic(
+  () => import("recharts").then((mod) => mod.LineChart),
+  { ssr: false },
+);
+const Line = dynamic(() => import("recharts").then((mod) => mod.Line), {
+  ssr: false,
+});
+const CartesianGrid = dynamic(
+  () => import("recharts").then((mod) => mod.CartesianGrid),
+  { ssr: false },
+);
+const XAxis = dynamic(() => import("recharts").then((mod) => mod.XAxis), {
+  ssr: false,
+});
+const YAxis = dynamic(() => import("recharts").then((mod) => mod.YAxis), {
+  ssr: false,
+});
 
 // 格式化日期显示
 function formatDate(dateString: string): string {

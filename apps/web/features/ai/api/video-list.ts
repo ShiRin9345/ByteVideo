@@ -2,7 +2,7 @@
 export interface VideoItem {
   id: string;
   name: string;
-  theme: string;
+  theme: string[]; // 主题数组
   views: number;
   likes: number;
   publishTime: string;
@@ -21,7 +21,9 @@ export interface VideoListResponse {
   error?: string;
 }
 
-// 获取视频列表
+import { apiClient } from "@/lib/axios";
+
+// 获取视频列表（当前用户自己的视频）
 export async function fetchVideoList(params: {
   page: number;
   pageSize: number;
@@ -39,11 +41,19 @@ export async function fetchVideoList(params: {
   });
 
   const queryString = searchParams.toString();
-  const url = `/api/video/list?${queryString}`;
 
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch video list: ${response.statusText}`);
+  // 使用认证的 API 端点，获取当前用户自己的视频
+  let url = `/video/my${queryString ? `?${queryString}` : ""}`;
+
+  // 如果是服务器端，构建完整 URL
+  if (typeof window === "undefined") {
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_VERCEL_URL
+        ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+        : "http://localhost:3000";
+    url = `${baseUrl}/api${url}`;
   }
-  return response.json();
+
+  const response = await apiClient.get<VideoListResponse>(url);
+  return response.data;
 }

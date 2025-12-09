@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import Aliplayer from "aliyun-aliplayer";
 import "aliyun-aliplayer/build/skins/default/aliplayer-min.css";
-import { useKeyboardControls } from "@/features/player/hooks/useKeyboardControls";
 
 interface VideoPlayerProps {
   videoId: string;
@@ -30,31 +29,9 @@ export function VideoPlayer({ videoId, playauth }: VideoPlayerProps) {
       license: DEFAULT_LICENSE,
       width: "100%",
       height: "100%",
-      useH5Prism: true,
       autoplay: true,
       clickPause: true,
-      vid: videoId,
-      playauth: playauth,
-      encryptType: "1",
-      skinLayout: [
-        { name: "bigPlayButton", align: "cc" },
-        { name: "H5Loading", align: "cc" },
-        { name: "errorDisplay", align: "tlabs", x: 0, y: 0 },
-        { name: "infoDisplay" },
-        {
-          name: "controlBar",
-          align: "blabs",
-          x: 0,
-          y: 0,
-          children: [
-            { name: "progress", align: "blabs", x: 0, y: 44 },
-            { name: "playButton", align: "tl", x: 15, y: 12 },
-            { name: "timeDisplay", align: "tl", x: 10, y: 7 },
-            { name: "fullScreenButton", align: "tr", x: 10, y: 12 },
-            { name: "volume", align: "tr", x: 5, y: 10 },
-          ],
-        },
-      ],
+      source: playauth,
     };
 
     const aliplayer = new Aliplayer(options, (playerInstance) => {
@@ -85,22 +62,11 @@ export function VideoPlayer({ videoId, playauth }: VideoPlayerProps) {
     };
   }, [videoId, playauth]);
 
-  // 启用键盘控制 - 使用 aliplayerRef 和 videoRef
-  useKeyboardControls({
-    aliplayerRef,
-    videoRef,
-    seekStep: 10,
-  });
-
   return (
-    <div className="h-full w-full">
-      <section
-        className="relative h-full w-full overflow-hidden bg-black"
-        aria-label="视频播放器"
-      >
-        {/* Aliplayer 容器 */}
-        <div ref={containerRef} id="aliplayer" className="h-full w-full"></div>
-      </section>
-    </div>
+    <div
+      ref={containerRef}
+      id="aliplayer"
+      className="h-full w-full bg-black"
+    ></div>
   );
 }

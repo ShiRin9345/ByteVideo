@@ -11,6 +11,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "picsum.photos",
       },
+      {
+        protocol: "http",
+        hostname: "shirin-123.oss-cn-beijing.aliyuncs.com",
+      },
     ],
   },
 };
