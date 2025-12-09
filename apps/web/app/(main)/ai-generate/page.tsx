@@ -39,7 +39,6 @@ export default function AIGeneratePage() {
   const [promptExtend, setPromptExtend] = useState(false);
   const [audio, setAudio] = useState(false);
   const [taskStatus, setTaskStatus] = useState<TaskStatus>("idle");
-  const [taskId, setTaskId] = useState<string | null>(null);
   const [taskInfo, setTaskInfo] = useState<TaskStatusResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [generatedTags, setGeneratedTags] = useState<string[]>([]);
@@ -55,7 +54,6 @@ export default function AIGeneratePage() {
 
     setError(null);
     setTaskStatus("pending");
-    setTaskId(null);
     setTaskInfo(null);
     setGeneratedTags([]);
     pollingRef.current = false;
@@ -76,7 +74,6 @@ export default function AIGeneratePage() {
         throw new Error("未获取到任务 ID");
       }
 
-      setTaskId(newTaskId);
       setTaskStatus("running");
       pollingRef.current = true;
 
