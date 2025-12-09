@@ -4,6 +4,11 @@ export type { VideoItem, VideoListResponse, VideoListParams } from "./types";
 // API
 export { fetchVideoList } from "./api/video-list";
 export {
+  getVideoList,
+  type GetVideoListParams,
+  type GetVideoListResult,
+} from "./api/my-video-list";
+export {
   fetchVideoDetail,
   fetchVideoPlayAuth,
   fetchVideoComments,

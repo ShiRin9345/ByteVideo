@@ -13,7 +13,7 @@ import { getSortingStateParser } from "@workspace/ui/lib/parsers";
 import type { ColumnDef } from "@tanstack/react-table";
 import { parseAsString } from "nuqs";
 import type { VideoItem } from "@/features/ai/api/video-list";
-import { EditVideoDialog } from "../EditVideoDialog";
+import { EditVideoDialog } from "./EditVideoDialog";
 
 const themes = ["生活", "美食", "旅行", "科技", "娱乐"] as const;
 

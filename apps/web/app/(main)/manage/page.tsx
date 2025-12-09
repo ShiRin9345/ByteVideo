@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getVideoList } from "./lib/get-video-list";
+import { getVideoList } from "@/features/video/api/my-video-list";
 import { VideoTable } from "./components/VideoTable";
 import { TableSkeleton } from "@/components/skeleton/table-skeleton";
 import { ToolbarSkeleton } from "@/components/skeleton/toolbar-skeleton";
