@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Sparkles, FolderKanban, BarChart3, User } from "lucide-react";
+import { Home, Sparkles, FolderKanban, User } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -29,7 +29,6 @@ const navigation = [
   { name: "首页", href: "/explore", icon: Home },
   { name: "创作", href: "/create", icon: Sparkles },
   { name: "管理", href: "/manage", icon: FolderKanban },
-  { name: "数据看板", href: "/dashboard", icon: BarChart3 },
 ];
 
 export function AppSidebar() {
@@ -45,7 +44,7 @@ export function AppSidebar() {
   };
 
   // 需要登录的路由
-  const protectedRoutes = ["/create", "/manage", "/dashboard"];
+  const protectedRoutes = ["/create", "/manage"];
 
   const handleNavClick = (
     e: React.MouseEvent<HTMLAnchorElement>,

@@ -72,17 +72,3 @@ export type VideoTagResponse = {
   tags: string[];
   raw: string;
 };
-
-// Mock 数据相关类型
-export type VideoDataPoint = {
-  date: string;
-  views: number;
-  clicks: number;
-};
-
-export type VideoInfo = {
-  id: string;
-  title: string;
-  totalViews: number;
-  totalClicks: number;
-};

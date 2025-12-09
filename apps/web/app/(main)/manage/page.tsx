@@ -1,11 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import {
-  useSuspenseQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQueryState } from "nuqs";
 import { Edit, Text } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
@@ -146,6 +142,13 @@ function EditVideoDialog({
 }
 
 export default function ManagePage() {
+  // 跟踪组件是否已挂载，避免 hydration 错误
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   // 从 URL 查询参数读取分页和筛选条件
   const [page] = useQueryState("page", parseAsString.withDefault("1"));
   const [perPage] = useQueryState("perPage", parseAsString.withDefault("10"));
@@ -293,7 +296,7 @@ export default function ManagePage() {
   const sortBy = currentSort?.id || "publishTime";
   const sortOrder: "asc" | "desc" = currentSort?.desc ? "desc" : "asc";
 
-  const { data: videoListData } = useSuspenseQuery({
+  const { data: videoListData, isLoading } = useQuery({
     queryKey: [
       "video-list",
       pageNum,
@@ -313,10 +316,11 @@ export default function ManagePage() {
         sortOrder: sortOrder,
       }),
     refetchOnWindowFocus: false,
+    enabled: isMounted, // 只在客户端挂载后执行
   });
 
-  const videos = videoListData.data.items;
-  const total = videoListData.data.total;
+  const videos = videoListData?.data.items || [];
+  const total = videoListData?.data.total || 0;
 
   const { table } = useDataTable({
     data: videos,
@@ -328,6 +332,15 @@ export default function ManagePage() {
     },
     getRowId: (row) => row.id,
   });
+
+  // 在服务器端或未挂载时，显示一致的占位内容
+  if (!isMounted || isLoading) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <p className="text-muted-foreground">加载中...</p>
+      </div>
+    );
+  }
 
   return (
     <>

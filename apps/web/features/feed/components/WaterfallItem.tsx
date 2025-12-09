@@ -77,7 +77,7 @@ export const WaterfallCard = memo<WaterfallCardProps>(({ item, width }) => {
         <div className="flex flex-shrink-0 items-center gap-1">
           <Heart className="text-muted-foreground fill-muted-foreground h-3.5 w-3.5" />
           <span className="text-muted-foreground text-xs">
-            {userData.likes}
+            {typeof item.likes === "number" ? item.likes : userData.likes}
           </span>
         </div>
       </section>

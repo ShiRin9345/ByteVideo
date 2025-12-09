@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Sparkles, FolderKanban, BarChart3 } from "lucide-react";
+import { Home, Sparkles, FolderKanban } from "lucide-react";
 import { useAuth } from "@/features/auth";
 import { LoginDialog } from "./login-dialog";
 import { useState } from "react";
@@ -11,7 +11,6 @@ const navigation = [
   { name: "首页", href: "/explore", icon: Home },
   { name: "创作", href: "/create", icon: Sparkles },
   { name: "管理", href: "/manage", icon: FolderKanban },
-  { name: "数据看板", href: "/dashboard", icon: BarChart3 },
 ];
 
 export function BottomNav() {
@@ -27,7 +26,7 @@ export function BottomNav() {
   };
 
   // 需要登录的路由
-  const protectedRoutes = ["/create", "/manage", "/dashboard"];
+  const protectedRoutes = ["/create", "/manage"];
 
   const handleNavClick = (
     e: React.MouseEvent<HTMLAnchorElement>,

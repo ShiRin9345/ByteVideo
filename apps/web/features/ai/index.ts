@@ -8,11 +8,6 @@ export {
 } from "./api/videoTask";
 
 // Mock data
-export {
-  generateAllVideosData,
-  generateSingleVideoData,
-  generateVideoList,
-} from "./lib/mockData";
 
 // Utils
 export { extractTagsFromText } from "./utils/extractTagsFromText";
@@ -26,6 +21,4 @@ export type {
   GenerationResult,
   VideoTagRequest,
   VideoTagResponse,
-  VideoDataPoint,
-  VideoInfo,
 } from "./types";

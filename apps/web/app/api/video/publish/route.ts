@@ -5,16 +5,40 @@ import { withAuth, AuthenticatedRequest } from "@/features/auth/lib/middleware";
 import { randomUUID } from "crypto";
 
 /**
+ * OSS 图片信息响应格式
+ */
+interface OSSImageInfoResponse {
+  FileSize?: {
+    value: string;
+  };
+  Format?: {
+    value: string;
+  };
+  FrameCount?: {
+    value: string;
+  };
+  ImageHeight?: {
+    value: string;
+  };
+  ImageWidth?: {
+    value: string;
+  };
+}
+
+/**
  * 获取图片基本信息（宽度、高度、大小）
+ * 通过 OSS 的 x-oss-process=image/info 查询参数获取图片信息
  * @param imageUrl 图片URL
  * @returns 图片信息 { width, height, size } 或 null
  */
 async function getImageInfo(
   imageUrl: string,
-): Promise<{ width: number; height: number; size: number } | null> {
+): Promise<{ width: number; height: number; size?: number } | null> {
   try {
-    // 构建 @info 请求URL
-    const infoUrl = `${imageUrl}@info`;
+    // 构建带查询参数的 URL
+    const separator = imageUrl.includes("?") ? "&" : "?";
+    const infoUrl = `${imageUrl}${separator}x-oss-process=image/info`;
+
     const response = await fetch(infoUrl);
     if (!response.ok) {
       console.warn(
@@ -23,12 +47,23 @@ async function getImageInfo(
       return null;
     }
 
-    const data = await response.json();
-    if (data.width && data.height && data.size) {
+    const data: OSSImageInfoResponse = await response.json();
+
+    const width = data.ImageWidth?.value
+      ? Number.parseInt(data.ImageWidth.value, 10)
+      : null;
+    const height = data.ImageHeight?.value
+      ? Number.parseInt(data.ImageHeight.value, 10)
+      : null;
+    const size = data.FileSize?.value
+      ? Number.parseInt(data.FileSize.value, 10)
+      : undefined;
+
+    if (width && height) {
       return {
-        width: Number(data.width),
-        height: Number(data.height),
-        size: Number(data.size),
+        width,
+        height,
+        size,
       };
     }
 
