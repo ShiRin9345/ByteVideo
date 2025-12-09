@@ -3,14 +3,12 @@ export {
   createVideoTask,
   checkTaskStatus,
   pollTaskResult,
-  generateVideoTags,
   RESOLUTION_OPTIONS,
 } from "./api/videoTask";
 
 // Mock data
 
 // Utils
-export { extractTagsFromText } from "./utils/extractTagsFromText";
 
 // Types
 export type {
@@ -19,6 +17,4 @@ export type {
   VideoGenerateResponse,
   TaskStatusResponse,
   GenerationResult,
-  VideoTagRequest,
-  VideoTagResponse,
 } from "./types";

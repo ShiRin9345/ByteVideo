@@ -23,7 +23,6 @@ import { Switch } from "@workspace/ui/components/switch";
 import {
   createVideoTask,
   pollTaskResult,
-  generateVideoTags,
   type VideoGenerateRequest,
   type TaskStatusResponse,
 } from "@/features/ai";
@@ -41,8 +40,6 @@ export default function AIGeneratePage() {
   const [taskStatus, setTaskStatus] = useState<TaskStatus>("idle");
   const [taskInfo, setTaskInfo] = useState<TaskStatusResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [generatedTags, setGeneratedTags] = useState<string[]>([]);
-  const [isGeneratingTags, setIsGeneratingTags] = useState(false);
   const pollingRef = useRef<boolean>(false);
 
   // 创建生成任务
@@ -55,7 +52,6 @@ export default function AIGeneratePage() {
     setError(null);
     setTaskStatus("pending");
     setTaskInfo(null);
-    setGeneratedTags([]);
     pollingRef.current = false;
 
     try {
@@ -120,41 +116,14 @@ export default function AIGeneratePage() {
     }
   };
 
-  // 生成智能标签
-  const handleGenerateTags = async () => {
-    if (!taskInfo?.output.video_url) {
-      setError("请先生成视频");
-      return;
-    }
-
-    setIsGeneratingTags(true);
-    setError(null);
-
-    try {
-      const result = await generateVideoTags({
-        videoUrl: taskInfo.output.video_url,
-        prompt: prompt,
-        actualPrompt:
-          taskInfo.output.actual_prompt || taskInfo.output.orig_prompt,
-      });
-
-      setGeneratedTags(result.tags);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "生成标签失败");
-    } finally {
-      setIsGeneratingTags(false);
-    }
-  };
-
   // 发布视频 - 跳转到 create 页面，提示用户下载并上传视频
   const handlePublish = () => {
     if (!taskInfo?.output.video_url) {
       return;
     }
 
-    // 将生成的标签和提示词传递到 create 页面
+    // 将提示词传递到 create 页面
     const params = new URLSearchParams({
-      ...(generatedTags.length > 0 && { tags: generatedTags.join(",") }),
       ...(taskInfo.output.actual_prompt && {
         prompt: taskInfo.output.actual_prompt,
       }),
@@ -326,46 +295,11 @@ export default function AIGeneratePage() {
                   下载视频
                 </Button>
 
-                <Button
-                  variant="outline"
-                  onClick={handleGenerateTags}
-                  disabled={isGeneratingTags}
-                >
-                  {isGeneratingTags ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      生成中...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="mr-2 h-4 w-4" />
-                      生成智能标签
-                    </>
-                  )}
-                </Button>
-
                 <Button onClick={handlePublish} disabled={!canPublish}>
                   <Play className="mr-2 h-4 w-4" />
                   发布视频
                 </Button>
               </div>
-
-              {/* 生成的标签 */}
-              {generatedTags.length > 0 && (
-                <div className="space-y-2">
-                  <Label>智能标签</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {generatedTags.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="bg-primary/10 text-primary rounded-full px-3 py-1 text-sm"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
         )}

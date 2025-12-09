@@ -61,14 +61,3 @@ export type GenerationResult = {
   endTime?: string;
   parameters: VideoGenerateRequest;
 };
-
-export type VideoTagRequest = {
-  videoUrl: string;
-  prompt?: string;
-  actualPrompt?: string;
-};
-
-export type VideoTagResponse = {
-  tags: string[];
-  raw: string;
-};

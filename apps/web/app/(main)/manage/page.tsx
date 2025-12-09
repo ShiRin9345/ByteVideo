@@ -35,7 +35,6 @@ export default async function ManagePage({ searchParams }: ManagePageProps) {
         sortOrder = sortArray[0]?.desc ? "desc" : "asc";
       }
     } catch {
-      // 如果解析失败，使用默认值
       sortBy = "publishTime";
       sortOrder = "desc";
     }
@@ -53,8 +52,7 @@ export default async function ManagePage({ searchParams }: ManagePageProps) {
     sortBy,
     sortOrder,
   });
-
-  // 如果没有数据（未认证或错误），显示空状态
+  console.log(videoListData);
   if (!videoListData) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">

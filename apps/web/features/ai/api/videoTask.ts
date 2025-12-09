@@ -2,8 +2,6 @@ import type {
   VideoGenerateRequest,
   VideoGenerateResponse,
   TaskStatusResponse,
-  VideoTagRequest,
-  VideoTagResponse,
 } from "../types";
 
 // 创建视频生成任务
@@ -114,22 +112,3 @@ export const RESOLUTION_OPTIONS = {
     { value: "1248*1632", label: "1248×1632 (3:4)" },
   ],
 };
-
-export async function generateVideoTags(
-  params: VideoTagRequest,
-): Promise<VideoTagResponse> {
-  const response = await fetch("/api/ai/smart-tag", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(params),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "生成视频标签失败");
-  }
-
-  return response.json();
-}
