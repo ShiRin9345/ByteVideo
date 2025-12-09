@@ -1,9 +1,8 @@
-import { memo, useState, useMemo, useCallback } from "react";
+import { memo, useState, useCallback } from "react";
 import Image from "next/image";
 import { Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { WaterfallItem } from "@/features/feed/types";
-import { generateUserData } from "@/features/feed/utils/generateUserData";
 import { useAuth } from "@/features/auth";
 
 interface WaterfallCardProps {
@@ -17,16 +16,14 @@ export const WaterfallCard = memo<WaterfallCardProps>(({ item, width }) => {
   const imageHeight = (width * item.height) / item.width;
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  // 优先使用真实的作者信息，如果没有则使用生成的假数据作为后备
+  // 使用真实的作者信息
   const author = item.author as
     | { id: string; name: string; username: string; image: string | null }
     | undefined;
-  const fallbackUserData = useMemo(() => generateUserData(item.id), [item.id]);
 
-  // 使用真实的作者信息或后备数据
-  const userName =
-    author?.name || author?.username || fallbackUserData.userName;
-  const avatarColor = author?.image ? undefined : fallbackUserData.avatarColor;
+  // 使用真实的作者信息或默认值
+  const userName = author?.name || author?.username || "用户";
+  const avatarColor = author?.image ? undefined : "#9CA3AF";
 
   const handleClick = useCallback(() => {
     // 检查用户是否登录
@@ -96,9 +93,7 @@ export const WaterfallCard = memo<WaterfallCardProps>(({ item, width }) => {
         <div className="flex flex-shrink-0 items-center gap-1">
           <Heart className="text-muted-foreground fill-muted-foreground h-3.5 w-3.5" />
           <span className="text-muted-foreground text-xs">
-            {typeof item.likes === "number"
-              ? item.likes
-              : fallbackUserData.likes}
+            {typeof item.likes === "number" ? item.likes : 0}
           </span>
         </div>
       </section>

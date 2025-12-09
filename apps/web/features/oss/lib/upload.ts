@@ -4,8 +4,8 @@ import {
   UploadFileType,
   UploadProgressCallback,
 } from "../types";
-import { getSTSCredentials } from "../api/sts";
-import { isCredentialsExpired } from "./credentials";
+import { getSTSCredentials } from "./sts";
+import { isCredentialsExpired } from "../utils/credentials";
 
 /**
  * 上传文件到 OSS

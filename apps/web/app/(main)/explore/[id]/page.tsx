@@ -21,7 +21,7 @@ import dayjs from "dayjs";
 // 动态导入 VideoPlayer 组件（包含大型播放器 SDK）
 const VideoPlayer = dynamic(
   () =>
-    import("@/features/player/components/VideoPlayer").then((mod) => ({
+    import("@/components/VideoPlayer").then((mod) => ({
       default: mod.VideoPlayer,
     })),
   {
