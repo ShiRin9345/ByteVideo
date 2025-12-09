@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@workspace/db/client";
-import { video } from "@workspace/db/schema";
-import { and, desc, asc, ilike, sql, gt } from "drizzle-orm";
+import { video, user } from "@workspace/db/schema";
+import { and, desc, asc, ilike, sql, gt, eq } from "drizzle-orm";
 
 // 视频数据接口
 export interface VideoItem {
@@ -19,6 +19,12 @@ export interface VideoItem {
   comments: number;
   createdAt: Date;
   updatedAt: Date;
+  author: {
+    id: string;
+    name: string;
+    username: string;
+    image: string | null;
+  };
 }
 
 // API 响应接口（使用 cursor 分页）
@@ -83,10 +89,19 @@ export async function GET(request: Request) {
         break;
     }
 
-    // 查询数据（多查询一条以判断是否有下一页）
+    // 查询数据（多查询一条以判断是否有下一页），同时关联用户信息
     const videos = await db
-      .select()
+      .select({
+        video: video,
+        user: {
+          id: user.id,
+          name: user.name,
+          username: user.username,
+          image: user.image,
+        },
+      })
       .from(video)
+      .innerJoin(user, eq(video.userId, user.id))
       .where(whereClause)
       .orderBy(orderBy, asc(video.id)) // 添加 id 作为次要排序，确保结果稳定
       .limit(pageSize + 1); // 多查询一条
@@ -97,24 +112,32 @@ export async function GET(request: Request) {
 
     // 生成 nextCursor（使用最后一条记录的 id）
     const nextCursor =
-      hasNextPage && items.length > 0 ? items[items.length - 1]!.id : null;
+      hasNextPage && items.length > 0
+        ? items[items.length - 1]!.video.id
+        : null;
 
     // 转换数据格式
-    const videoItems: VideoItem[] = items.map((v) => ({
-      id: v.id,
-      name: v.name,
-      theme: v.theme,
-      description: v.description,
-      tags: v.tags,
-      videoId: v.videoId,
-      coverUrl: v.coverUrl,
-      coverWidth: v.coverWidth ?? null,
-      coverHeight: v.coverHeight ?? null,
-      views: v.views,
-      likes: v.likes,
-      comments: v.comments,
-      createdAt: v.createdAt,
-      updatedAt: v.updatedAt,
+    const videoItems: VideoItem[] = items.map((item) => ({
+      id: item.video.id,
+      name: item.video.name,
+      theme: item.video.theme,
+      description: item.video.description,
+      tags: item.video.tags,
+      videoId: item.video.videoId,
+      coverUrl: item.video.coverUrl,
+      coverWidth: item.video.coverWidth ?? null,
+      coverHeight: item.video.coverHeight ?? null,
+      views: item.video.views,
+      likes: item.video.likes,
+      comments: item.video.comments,
+      createdAt: item.video.createdAt,
+      updatedAt: item.video.updatedAt,
+      author: {
+        id: item.user.id,
+        name: item.user.name,
+        username: item.user.username,
+        image: item.user.image,
+      },
     }));
 
     const response: VideoListResponse = {

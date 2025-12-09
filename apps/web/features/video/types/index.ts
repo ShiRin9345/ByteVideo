@@ -13,6 +13,12 @@ export interface VideoItem {
   comments: number;
   createdAt: string; // ISO 字符串格式
   updatedAt: string; // ISO 字符串格式
+  author?: {
+    id: string;
+    name: string;
+    username: string;
+    image: string | null;
+  };
 }
 
 export interface VideoListResponse {

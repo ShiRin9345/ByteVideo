@@ -17,7 +17,16 @@ export const WaterfallCard = memo<WaterfallCardProps>(({ item, width }) => {
   const imageHeight = (width * item.height) / item.width;
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  const userData = useMemo(() => generateUserData(item.id), [item.id]);
+  // 优先使用真实的作者信息，如果没有则使用生成的假数据作为后备
+  const author = item.author as
+    | { id: string; name: string; username: string; image: string | null }
+    | undefined;
+  const fallbackUserData = useMemo(() => generateUserData(item.id), [item.id]);
+
+  // 使用真实的作者信息或后备数据
+  const userName =
+    author?.name || author?.username || fallbackUserData.userName;
+  const avatarColor = author?.image ? undefined : fallbackUserData.avatarColor;
 
   const handleClick = useCallback(() => {
     // 检查用户是否登录
@@ -63,21 +72,33 @@ export const WaterfallCard = memo<WaterfallCardProps>(({ item, width }) => {
       {/* 用户信息 */}
       <section className="flex items-center gap-2 px-3 pb-3">
         {/* 用户头像 */}
-        <div
-          className="h-6 w-6 flex-shrink-0 rounded-full"
-          style={{ backgroundColor: userData.avatarColor }}
-        />
+        {author?.image ? (
+          <Image
+            src={author.image}
+            alt={userName}
+            width={24}
+            height={24}
+            className="h-6 w-6 flex-shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <div
+            className="h-6 w-6 flex-shrink-0 rounded-full"
+            style={{ backgroundColor: avatarColor }}
+          />
+        )}
 
         {/* 用户名 */}
         <span className="text-muted-foreground flex-1 truncate text-xs">
-          {userData.userName}
+          {userName}
         </span>
 
         {/* 点赞数 */}
         <div className="flex flex-shrink-0 items-center gap-1">
           <Heart className="text-muted-foreground fill-muted-foreground h-3.5 w-3.5" />
           <span className="text-muted-foreground text-xs">
-            {typeof item.likes === "number" ? item.likes : userData.likes}
+            {typeof item.likes === "number"
+              ? item.likes
+              : fallbackUserData.likes}
           </span>
         </div>
       </section>

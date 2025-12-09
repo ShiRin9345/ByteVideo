@@ -7,6 +7,13 @@ import { useVideoList } from "@/features/video";
 import { WaterfallSkeleton } from "@/features/feed/components/WaterfallSkeleton";
 import { Input } from "@workspace/ui/components/input";
 import { Button } from "@workspace/ui/components/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select";
 import type { VideoItem } from "@/features/video";
 import type { WaterfallItem } from "@/features/feed/types";
 
@@ -31,6 +38,10 @@ export default function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<Category>("推荐");
+  const [sortBy, setSortBy] = useState<"createdAt" | "likes" | "views">(
+    "createdAt",
+  );
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // 防抖处理搜索查询
@@ -65,8 +76,8 @@ export default function ExplorePage() {
     limit: 10,
     name: debouncedSearchQuery || undefined,
     theme: themeFilter,
-    sortBy: "createdAt",
-    sortOrder: "desc",
+    sortBy,
+    sortOrder,
   });
 
   const handleLoadMore = useCallback(() => {
@@ -100,6 +111,8 @@ export default function ExplorePage() {
         views: video.views,
         likes: video.likes,
         createdAt: video.createdAt,
+        // 传递作者信息
+        author: video.author,
       };
     });
   }, [videoItems]);
@@ -120,6 +133,36 @@ export default function ExplorePage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
               />
+            </div>
+            {/* 排序选择器 */}
+            <div className="flex items-center gap-2">
+              <Select
+                value={sortBy}
+                onValueChange={(value: "createdAt" | "likes" | "views") =>
+                  setSortBy(value)
+                }
+              >
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="排序方式" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="createdAt">最新发布</SelectItem>
+                  <SelectItem value="likes">点赞数</SelectItem>
+                  <SelectItem value="views">播放量</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={sortOrder}
+                onValueChange={(value: "asc" | "desc") => setSortOrder(value)}
+              >
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue placeholder="排序方向" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="desc">降序</SelectItem>
+                  <SelectItem value="asc">升序</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
@@ -181,7 +224,7 @@ export default function ExplorePage() {
         ) : (
           <div className="h-[calc(100vh-200px)] overflow-x-hidden">
             <XiaohongshuWaterfall
-              key={`${selectedCategory}-${debouncedSearchQuery}`}
+              key={`${selectedCategory}-${debouncedSearchQuery}-${sortBy}-${sortOrder}`}
               items={waterfallItems}
               columnGap={30}
               rowGap={50}

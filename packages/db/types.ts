@@ -1,5 +1,5 @@
 import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
-import { user, refreshToken, video, commentTable, videoStat } from "./schema";
+import { user, refreshToken, video, commentTable } from "./schema";
 
 // User types
 export type User = InferSelectModel<typeof user>;
@@ -16,7 +16,3 @@ export type NewVideo = InferInsertModel<typeof video>;
 // Comment types
 export type Comment = InferSelectModel<typeof commentTable>;
 export type NewComment = InferInsertModel<typeof commentTable>;
-
-// VideoStat types
-export type VideoStat = InferSelectModel<typeof videoStat>;
-export type NewVideoStat = InferInsertModel<typeof videoStat>;

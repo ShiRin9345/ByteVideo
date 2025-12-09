@@ -5,7 +5,6 @@ import {
   boolean,
   integer,
   index,
-  unique,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -88,27 +87,6 @@ export const commentTable = pgTable(
   ],
 );
 
-// 视频统计数据表（用于数据可视化）
-export const videoStat = pgTable(
-  "video_stat",
-  {
-    id: text("id").primaryKey(),
-    videoId: text("video_id")
-      .notNull()
-      .references(() => video.id, { onDelete: "cascade" }),
-    date: timestamp("date").notNull(), // 日期（按天统计）
-    views: integer("views").notNull().default(0), // 当日播放量
-    clicks: integer("clicks").notNull().default(0), // 当日点击数
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-  },
-  (table) => [
-    index("video_stat_video_id_idx").on(table.videoId),
-    index("video_stat_date_idx").on(table.date),
-    // 唯一约束：确保每个视频每天只有一条统计记录
-    unique("video_stat_video_id_date_unique").on(table.videoId, table.date),
-  ],
-);
-
 // ==================== 关系定义 ====================
 
 export const userRelations = relations(user, ({ many }) => ({
@@ -130,7 +108,6 @@ export const videoRelations = relations(video, ({ one, many }) => ({
     references: [user.id],
   }),
   comments: many(commentTable),
-  stats: many(videoStat),
 }));
 
 export const commentRelations = relations(commentTable, ({ one }) => ({
@@ -140,13 +117,6 @@ export const commentRelations = relations(commentTable, ({ one }) => ({
   }),
   video: one(video, {
     fields: [commentTable.videoId],
-    references: [video.id],
-  }),
-}));
-
-export const videoStatRelations = relations(videoStat, ({ one }) => ({
-  video: one(video, {
-    fields: [videoStat.videoId],
     references: [video.id],
   }),
 }));
