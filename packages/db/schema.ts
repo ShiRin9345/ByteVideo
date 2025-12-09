@@ -77,7 +77,6 @@ export const commentTable = pgTable(
       .notNull()
       .references(() => video.id, { onDelete: "cascade" }),
     content: text("content").notNull(), // 评论内容
-    likes: integer("likes").notNull().default(0), // 评论点赞数
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },

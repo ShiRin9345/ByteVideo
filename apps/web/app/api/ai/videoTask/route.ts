@@ -9,8 +9,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const DASHSCOPE_BASE_URL = process.env.DASHSCOPE_BASE_URL!;
+    const DASHSCOPE_API_KEY = process.env.DASHSCOPE_API_KEY!;
     const response = await axios.post(
-      `${process.env.DASHSCOPE_BASE_URL}/services/aigc/video-generation/video-synthesis`,
+      `${DASHSCOPE_BASE_URL}/services/aigc/video-generation/video-synthesis`,
       {
         model: "wan2.5-t2v-preview",
         input: {
@@ -26,16 +28,20 @@ export async function POST(request: NextRequest) {
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.DASHSCOPE_API_KEY}`,
+          Authorization: `Bearer ${DASHSCOPE_API_KEY}`,
           "X-DashScope-Async": "enable",
         },
       },
     );
 
     return NextResponse.json(response.data);
-  } catch {
+  } catch (error) {
+    console.error("Error creating video task:", error);
+
     return NextResponse.json(
-      { error: "Failed to create video generation task" },
+      {
+        error: "Failed to create video generation task",
+      },
       { status: 500 },
     );
   }

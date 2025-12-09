@@ -10,7 +10,7 @@ import type {
 export async function createVideoTask(
   params: VideoGenerateRequest,
 ): Promise<VideoGenerateResponse> {
-  const response = await fetch("/api/video/generate", {
+  const response = await fetch("/api/ai/videoTask", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -30,7 +30,7 @@ export async function createVideoTask(
 export async function checkTaskStatus(
   taskId: string,
 ): Promise<TaskStatusResponse> {
-  const response = await fetch(`/api/video/status/${taskId}`, {
+  const response = await fetch(`/api/ai/status/${taskId}`, {
     method: "GET",
   });
 
@@ -118,7 +118,7 @@ export const RESOLUTION_OPTIONS = {
 export async function generateVideoTags(
   params: VideoTagRequest,
 ): Promise<VideoTagResponse> {
-  const response = await fetch("/api/video/tag", {
+  const response = await fetch("/api/ai/smart-tag", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

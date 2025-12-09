@@ -1,7 +1,6 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { Heart } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { Separator } from "@workspace/ui/components/separator";
 import { useState, useEffect } from "react";
@@ -249,12 +248,6 @@ export default function VideoWatchPage() {
                         </span>
                       </div>
                       <p className="mb-2 text-sm">{comment.content}</p>
-                      <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="sm" className="h-6 gap-1">
-                          <Heart className="h-3 w-3" />
-                          {comment.likes}
-                        </Button>
-                      </div>
                     </div>
                   </div>
                 ))}

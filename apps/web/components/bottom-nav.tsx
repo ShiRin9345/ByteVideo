@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Sparkles, FolderKanban } from "lucide-react";
+import { Home, Sparkles, FolderKanban, Wand2 } from "lucide-react";
 import { useAuth } from "@/features/auth";
 import { LoginDialog } from "./login-dialog";
 import { useState } from "react";
@@ -10,6 +10,7 @@ import { useState } from "react";
 const navigation = [
   { name: "首页", href: "/explore", icon: Home },
   { name: "创作", href: "/create", icon: Sparkles },
+  { name: "AI 生成", href: "/ai-generate", icon: Wand2 },
   { name: "管理", href: "/manage", icon: FolderKanban },
 ];
 
@@ -26,7 +27,7 @@ export function BottomNav() {
   };
 
   // 需要登录的路由
-  const protectedRoutes = ["/create", "/manage"];
+  const protectedRoutes = ["/create", "/manage", "/ai-generate"];
 
   const handleNavClick = (
     e: React.MouseEvent<HTMLAnchorElement>,

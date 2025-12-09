@@ -23,7 +23,12 @@ export async function POST(req: NextRequest) {
       .set({ revoked: true })
       .where(eq(refreshToken.tokenHash, tokenHash));
 
-    return NextResponse.json({ message: "Logged out successfully" });
+    // 创建响应并清除 cookies
+    const response = NextResponse.json({ message: "Logged out successfully" });
+    response.cookies.delete("access_token");
+    response.cookies.delete("refresh_token");
+
+    return response;
   } catch (error) {
     console.error("Logout error:", error);
     return NextResponse.json(

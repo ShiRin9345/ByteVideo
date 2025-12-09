@@ -56,7 +56,6 @@ export async function fetchVideoPlayAuth(videoId: string) {
 export interface CommentItem {
   id: string;
   content: string;
-  likes: number;
   createdAt: string;
   author: {
     id: string;
@@ -116,7 +115,6 @@ export interface CreateCommentResponse {
   data?: {
     id: string;
     content: string;
-    likes: number;
     createdAt: string;
     videoComments: number;
   };

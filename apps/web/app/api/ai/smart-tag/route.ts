@@ -16,9 +16,30 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    // 清理环境变量值（去除引号、分号等）
+    const DASHSCOPE_BASE_URL = process.env.DASHSCOPE_BASE_URL?.trim().replace(
+      /^["']|["'];?$/g,
+      "",
+    );
+    const DASHSCOPE_API_KEY = process.env.DASHSCOPE_API_KEY?.trim().replace(
+      /^["']|["'];?$/g,
+      "",
+    );
+
+    if (!DASHSCOPE_BASE_URL || !DASHSCOPE_API_KEY) {
+      console.error("Missing environment variables:", {
+        DASHSCOPE_BASE_URL: !!DASHSCOPE_BASE_URL,
+        DASHSCOPE_API_KEY: !!DASHSCOPE_API_KEY,
+      });
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 },
+      );
+    }
+
     const client = new OpenAI({
-      apiKey: process.env.DASHSCOPE_API_KEY,
-      baseURL: process.env.DASHSCOPE_BASE_URL,
+      apiKey: DASHSCOPE_API_KEY,
+      baseURL: DASHSCOPE_BASE_URL,
     });
 
     // 构建用户提示词
@@ -60,9 +81,16 @@ export async function POST(request: NextRequest) {
     const tags = extractTagsFromText(content);
 
     return NextResponse.json({ tags, raw: content });
-  } catch {
+  } catch (error) {
+    console.error("Error generating tags:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
     return NextResponse.json(
-      { error: "Failed to generate tags" },
+      {
+        error: "Failed to generate tags",
+        message: errorMessage,
+      },
       { status: 500 },
     );
   }

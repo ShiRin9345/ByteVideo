@@ -8,7 +8,6 @@ import { randomUUID } from "crypto";
 export interface CommentItem {
   id: string;
   content: string;
-  likes: number;
   createdAt: Date;
   author: {
     id: string;
@@ -33,7 +32,6 @@ export interface CreateCommentResponse {
   data?: {
     id: string;
     content: string;
-    likes: number;
     createdAt: Date;
     videoComments: number; // 更新后的视频评论总数
   };
@@ -69,7 +67,6 @@ export async function GET(
       .select({
         id: commentTable.id,
         content: commentTable.content,
-        likes: commentTable.likes,
         createdAt: commentTable.createdAt,
         author: {
           id: user.id,
@@ -160,7 +157,6 @@ export const POST = withAuth(
           userId: req.user.userId,
           videoId: id,
           content: content.trim(),
-          likes: 0,
         })
         .returning();
 
@@ -179,7 +175,6 @@ export const POST = withAuth(
         data: {
           id: newComment[0]!.id,
           content: newComment[0]!.content,
-          likes: newComment[0]!.likes,
           createdAt: newComment[0]!.createdAt,
           videoComments: updatedVideo[0]!.comments,
         },

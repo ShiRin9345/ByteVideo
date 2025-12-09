@@ -88,10 +88,39 @@ export async function POST(req: NextRequest) {
       revoked: false,
     });
 
-    return NextResponse.json({
+    // 创建响应
+    const response = NextResponse.json({
       accessToken: newAccessToken,
       refreshToken: newRefreshToken,
     });
+
+    // 同时更新 cookies
+    const accessTokenExpiry = new Date();
+    accessTokenExpiry.setSeconds(
+      accessTokenExpiry.getSeconds() +
+        Number(process.env.JWT_ACCESS_TOKEN_EXPIRY || "900"),
+    );
+
+    const refreshTokenExpiry = new Date();
+    refreshTokenExpiry.setDate(refreshTokenExpiry.getDate() + 7);
+
+    response.cookies.set("access_token", newAccessToken, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      expires: accessTokenExpiry,
+      path: "/",
+    });
+
+    response.cookies.set("refresh_token", newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      expires: refreshTokenExpiry,
+      path: "/",
+    });
+
+    return response;
   } catch (error) {
     console.error("Refresh token error:", error);
     return NextResponse.json(

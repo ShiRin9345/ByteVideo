@@ -70,7 +70,8 @@ export async function POST(req: NextRequest) {
       revoked: false,
     });
 
-    return NextResponse.json({
+    // 创建响应
+    const response = NextResponse.json({
       accessToken,
       refreshToken: newRefreshToken,
       user: {
@@ -81,6 +82,34 @@ export async function POST(req: NextRequest) {
         image: foundUser.image,
       },
     });
+
+    // 同时设置 cookies，用于服务端访问
+    const accessTokenExpiry = new Date();
+    accessTokenExpiry.setSeconds(
+      accessTokenExpiry.getSeconds() +
+        Number(process.env.JWT_ACCESS_TOKEN_EXPIRY || "900"),
+    );
+
+    const refreshTokenExpiry = new Date();
+    refreshTokenExpiry.setDate(refreshTokenExpiry.getDate() + 7);
+
+    response.cookies.set("access_token", accessToken, {
+      httpOnly: false, // 允许客户端访问（用于 axios）
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      expires: accessTokenExpiry,
+      path: "/",
+    });
+
+    response.cookies.set("refresh_token", newRefreshToken, {
+      httpOnly: true, // 更安全，只允许服务端访问
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      expires: refreshTokenExpiry,
+      path: "/",
+    });
+
+    return response;
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json(
