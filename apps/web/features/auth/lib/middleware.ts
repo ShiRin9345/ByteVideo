@@ -14,27 +14,8 @@ export async function authenticateToken(
 ): Promise<
   { user: { userId: string; username: string; email: string } } | NextResponse
 > {
-  // 优先从 Authorization header 读取 token
   const authHeader = req.headers.get("authorization");
-  let token = authHeader && authHeader.split(" ")[1];
-
-  // 如果没有 Authorization header，尝试从 cookie 中读取
-  if (!token) {
-    const cookieHeader = req.headers.get("cookie");
-    if (cookieHeader) {
-      const cookies = cookieHeader.split(";").reduce(
-        (acc, cookie) => {
-          const [name, value] = cookie.trim().split("=");
-          if (name && value) {
-            acc[name] = decodeURIComponent(value);
-          }
-          return acc;
-        },
-        {} as Record<string, string>,
-      );
-      token = cookies["access_token"];
-    }
-  }
+  const token = authHeader && authHeader.split(" ")[1];
 
   if (!token) {
     return NextResponse.json(
