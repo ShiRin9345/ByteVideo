@@ -28,6 +28,7 @@ export async function getVideoList(
   try {
     // 从 cookies 获取 access token
     const cookieStore = await cookies();
+    console.log(cookieStore);
     const accessToken = cookieStore.get("access_token")?.value;
 
     if (!accessToken) {
