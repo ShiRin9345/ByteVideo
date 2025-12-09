@@ -50,10 +50,11 @@ export async function getVideoList(
         ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
         : "http://localhost:3000");
 
-    // 调用内部 API
+    // 调用内部 API，同时传递 cookie（让 API 路由也能从 cookie 读取）
     const response = await fetch(`${baseUrl}/api/video/my?${queryString}`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
+        Cookie: cookieStore.toString(), // 传递所有 cookies
       },
       cache: "no-store", // 不缓存，确保获取最新数据
     });
