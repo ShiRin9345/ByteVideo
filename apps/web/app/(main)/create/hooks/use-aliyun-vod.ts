@@ -10,11 +10,7 @@ interface GetUploadAuthParams {
   videoName?: string;
 }
 
-export function useAliyunVodUpload(
-  ossReady: boolean,
-  uploadReady: boolean,
-  videoName?: string,
-) {
+export function useAliyunVodUpload(videoName?: string) {
   const [videoUpload, setVideoUpload] = useState<VideoUploadState | null>(null);
   const uploaderRef = useRef<AliyunUploadType>(null);
 
@@ -53,7 +49,7 @@ export function useAliyunVodUpload(
 
   // 初始化上传器
   useEffect(() => {
-    if (!ossReady || !uploadReady || typeof window === "undefined") return;
+    if (!window.AliyunUpload || !window.OSS) return;
 
     const win = window as Window & {
       AliyunUpload?: {
@@ -227,15 +223,11 @@ export function useAliyunVodUpload(
             });
           }
         },
-        refreshSTSToken: async function () {
-          console.log("refreshSTSToken");
-        },
-        refreshSTSTokenInterval: 1000 * 60 * 60 * 24,
       });
 
       uploaderRef.current = uploaderInstance;
     }
-  }, [ossReady, uploadReady, getUploadAuth, refreshUploadAuth, videoName]);
+  }, [getUploadAuth, refreshUploadAuth, videoName]);
 
   // 处理视频选择
   const handleVideoSelect = useCallback(

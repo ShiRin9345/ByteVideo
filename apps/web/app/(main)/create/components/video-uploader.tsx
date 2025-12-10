@@ -12,7 +12,6 @@ interface VideoUploaderProps {
   onStart: () => void;
   onPause: () => void;
   onResume: () => void;
-  disabled: boolean;
 }
 
 const formatFileSize = (bytes: number) => {
@@ -29,7 +28,6 @@ export function VideoUploader({
   onStart,
   onPause,
   onResume,
-  disabled,
 }: VideoUploaderProps) {
   const videoInputRef = useRef<HTMLInputElement>(null);
 
@@ -43,11 +41,7 @@ export function VideoUploader({
         accept="video/*"
         onChange={onSelect}
         className="mt-1"
-        disabled={disabled}
       />
-      {disabled && (
-        <p className="text-muted-foreground text-sm">正在加载上传组件...</p>
-      )}
       {videoUpload && (
         <div className="mt-2 space-y-2 rounded-lg border p-3">
           <div className="flex items-center justify-between">

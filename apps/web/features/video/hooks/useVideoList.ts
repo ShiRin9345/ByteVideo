@@ -57,11 +57,18 @@ export function useVideoList(
     refetchOnWindowFocus: false,
   });
 
-  // 扁平化所有页面的数据
-  const items = useMemo(
-    () => query.data?.pages.flatMap((page) => page.data.items) ?? [],
-    [query.data?.pages],
-  );
+  // 扁平化所有页面的数据，并根据 id 去重
+  const items = useMemo(() => {
+    const allItems = query.data?.pages.flatMap((page) => page.data.items) ?? [];
+    // 使用 Map 根据 id 去重，保留第一次出现的项
+    const uniqueItemsMap = new Map<string, VideoItem>();
+    for (const item of allItems) {
+      if (!uniqueItemsMap.has(item.id)) {
+        uniqueItemsMap.set(item.id, item);
+      }
+    }
+    return Array.from(uniqueItemsMap.values());
+  }, [query.data?.pages]);
 
   return {
     items,

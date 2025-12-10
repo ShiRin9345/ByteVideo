@@ -1,4 +1,5 @@
 import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
+import Script from "next/script";
 
 import "@workspace/ui/globals.css";
 import "./globals.css";
@@ -39,6 +40,11 @@ export default function RootLayout({
       <body
         className={`${fontSans.variable} ${fontMono.variable} ${fontDisplay.variable} overflow-x-hidden font-sans antialiased`}
       >
+        <Script src="/lib/aliyun-oss-sdk-6.17.1.min.js" strategy="lazyOnload" />
+        <Script
+          src="/lib/aliyun-upload-sdk-1.5.7.min.js"
+          strategy="lazyOnload"
+        />
         <NuqsAdapter>
           <QueryProvider>
             <ThemeProvider>

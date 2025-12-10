@@ -52,7 +52,6 @@ export default async function ManagePage({ searchParams }: ManagePageProps) {
     sortBy,
     sortOrder,
   });
-  console.log(videoListData);
   if (!videoListData) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">

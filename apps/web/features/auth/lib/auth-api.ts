@@ -88,3 +88,10 @@ export async function getCurrentUser(): Promise<User> {
   const response = await apiClient.get<{ user: User }>(`/auth/me`);
   return response.data.user;
 }
+
+export async function updateUserAvatar(imageUrl: string): Promise<User> {
+  const response = await apiClient.put<{ user: User }>(`/auth/profile`, {
+    image: imageUrl,
+  });
+  return response.data.user;
+}

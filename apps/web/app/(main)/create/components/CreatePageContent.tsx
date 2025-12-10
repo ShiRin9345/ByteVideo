@@ -1,6 +1,5 @@
 "use client";
 
-import Script from "next/script";
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@workspace/ui/components/button";
@@ -22,8 +21,6 @@ import { CoverUploader } from "./cover-uploader";
 
 export function CreatePageContent() {
   const searchParams = useSearchParams();
-  const [ossReady, setOssReady] = useState(false);
-  const [uploadReady, setUploadReady] = useState(false);
 
   // 表单数据
   const [formData, setFormData] = useState({
@@ -45,7 +42,7 @@ export function CreatePageContent() {
     pauseUpload,
     resumeUpload,
     resetUpload,
-  } = useAliyunVodUpload(ossReady, uploadReady, formData.name);
+  } = useAliyunVodUpload(formData.name);
 
   const { coverUpload, handleCoverSelect, resetCover } = useOSSCoverUpload();
 
@@ -57,6 +54,7 @@ export function CreatePageContent() {
   const coverInputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
+  // 检查脚本是否已经加载（脚本在根 layout 中加载，需要持续检查直到加载完成）
   // 初始化表单数据（从 URL 参数）
   useEffect(() => {
     const tags = searchParams.get("tags");
@@ -166,155 +164,141 @@ export function CreatePageContent() {
   };
 
   return (
-    <>
-      <Script
-        src="/lib/aliyun-oss-sdk-6.17.1.min.js"
-        strategy="lazyOnload"
-        onLoad={() => setOssReady(true)}
-      />
-      <Script
-        src="/lib/aliyun-upload-sdk-1.5.7.min.js"
-        strategy="lazyOnload"
-        onLoad={() => setUploadReady(true)}
-      />
+    <div className="container mx-auto max-w-4xl p-6">
+      <h1 className="mb-6 text-2xl font-bold">视频发布</h1>
 
-      <div className="container mx-auto max-w-4xl p-6">
-        <h1 className="mb-6 text-2xl font-bold">视频发布</h1>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>上传视频和封面图</CardTitle>
-            <CardDescription>
-              视频将上传到 VOD，封面图将上传到 OSS
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-              {/* AI 生成提示 */}
-              {aiGenerated && aiGeneratedVideoUrl && (
-                <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-                  <p className="text-sm font-medium text-blue-900">
-                    ✨ 来自 AI 生成的视频
-                  </p>
-                  <p className="text-muted-foreground mt-1 text-sm">
-                    请先下载 AI 生成的视频，然后上传到平台进行发布。
-                  </p>
-                  <a
-                    href={aiGeneratedVideoUrl}
-                    download
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary mt-2 inline-block text-sm underline"
-                  >
-                    下载视频 →
-                  </a>
-                </div>
-              )}
-
-              {/* 视频上传组件 */}
-              <VideoUploader
-                videoUpload={videoUpload}
-                onSelect={handleVideoSelect}
-                onStart={startUpload}
-                onPause={pauseUpload}
-                onResume={resumeUpload}
-                disabled={!ossReady || !uploadReady}
-              />
-
-              {/* 封面图上传组件 */}
-              <CoverUploader
-                coverUpload={coverUpload}
-                onSelect={handleCoverSelect}
-              />
-
-              {/* 视频名称 */}
-              <div className="space-y-2">
-                <Label htmlFor="name">视频名称 *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  placeholder="请输入视频名称"
-                  required
-                />
+      <Card>
+        <CardHeader>
+          <CardTitle>上传视频和封面图</CardTitle>
+          <CardDescription>
+            视频将上传到 VOD，封面图将上传到 OSS
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
+            {/* AI 生成提示 */}
+            {aiGenerated && aiGeneratedVideoUrl && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <p className="text-sm font-medium text-blue-900">
+                  ✨ 来自 AI 生成的视频
+                </p>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  请先下载 AI 生成的视频，然后上传到平台进行发布。
+                </p>
+                <a
+                  href={aiGeneratedVideoUrl}
+                  download
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary mt-2 inline-block text-sm underline"
+                >
+                  下载视频 →
+                </a>
               </div>
+            )}
 
-              {/* 主题 */}
-              <div className="space-y-2">
-                <Label htmlFor="theme">主题 *（多个主题用逗号分隔）</Label>
-                <Input
-                  id="theme"
-                  value={formData.theme}
-                  onChange={(e) =>
-                    setFormData({ ...formData, theme: e.target.value })
-                  }
-                  placeholder="例如: 科技,编程,教程"
-                  required
-                />
-              </div>
+            {/* 视频上传组件 */}
+            <VideoUploader
+              videoUpload={videoUpload}
+              onSelect={handleVideoSelect}
+              onStart={startUpload}
+              onPause={pauseUpload}
+              onResume={resumeUpload}
+            />
 
-              {/* 描述 */}
-              <div className="space-y-2">
-                <Label htmlFor="description">描述</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  placeholder="请输入视频描述（可选）"
-                  rows={4}
-                />
-              </div>
+            {/* 封面图上传组件 */}
+            <CoverUploader
+              coverUpload={coverUpload}
+              onSelect={handleCoverSelect}
+            />
 
-              {/* 标签 */}
-              <div className="space-y-2">
-                <Label htmlFor="tags">标签（多个标签用逗号分隔）</Label>
-                <Input
-                  id="tags"
-                  value={formData.tags}
-                  onChange={(e) =>
-                    setFormData({ ...formData, tags: e.target.value })
-                  }
-                  placeholder="例如: 前端,React,Next.js"
-                />
-              </div>
-
-              {/* 错误提示 */}
-              {submitError && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
-                  {submitError}
-                </div>
-              )}
-
-              {/* 成功提示 */}
-              {submitSuccess && (
-                <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-600">
-                  ✓ 发布成功！
-                </div>
-              )}
-
-              {/* 提交按钮 */}
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={
-                  isSubmitting ||
-                  !videoUpload ||
-                  videoUpload.status !== "success" ||
-                  !videoUpload.videoId ||
-                  !coverUpload ||
-                  coverUpload.status !== "success"
+            {/* 视频名称 */}
+            <div className="space-y-2">
+              <Label htmlFor="name">视频标题 *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
                 }
-              >
-                {isSubmitting ? "发布中..." : "发布视频"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    </>
+                placeholder="请输入视频标题"
+                required
+              />
+            </div>
+
+            {/* 主题 */}
+            <div className="space-y-2">
+              <Label htmlFor="theme">主题 *（多个主题用逗号分隔）</Label>
+              <Input
+                id="theme"
+                value={formData.theme}
+                onChange={(e) =>
+                  setFormData({ ...formData, theme: e.target.value })
+                }
+                placeholder="例如: 科技,编程,教程"
+                required
+              />
+            </div>
+
+            {/* 描述 */}
+            <div className="space-y-2">
+              <Label htmlFor="description">描述</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                placeholder="请输入视频描述（可选）"
+                rows={4}
+              />
+            </div>
+
+            {/* 标签 */}
+            <div className="space-y-2">
+              <Label htmlFor="tags">标签（多个标签用逗号分隔）</Label>
+              <Input
+                id="tags"
+                value={formData.tags}
+                onChange={(e) =>
+                  setFormData({ ...formData, tags: e.target.value })
+                }
+                placeholder="例如: 前端,React,Next.js"
+              />
+            </div>
+
+            {/* 错误提示 */}
+            {submitError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+                {submitError}
+              </div>
+            )}
+
+            {/* 成功提示 */}
+            {submitSuccess && (
+              <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-600">
+                ✓ 发布成功！
+              </div>
+            )}
+
+            {/* 提交按钮 */}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={
+                isSubmitting ||
+                !videoUpload ||
+                videoUpload.status !== "success" ||
+                !videoUpload.videoId ||
+                !coverUpload ||
+                coverUpload.status !== "success"
+              }
+            >
+              {isSubmitting ? "发布中..." : "发布视频"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

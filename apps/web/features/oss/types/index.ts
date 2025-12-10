@@ -10,7 +10,7 @@ export interface OSSConfig {
   region: string;
 }
 
-export type UploadFileType = "video" | "cover";
+export type UploadFileType = "video" | "cover" | "avatar";
 
 export interface UploadProgressCallback {
   (progress: number): void;

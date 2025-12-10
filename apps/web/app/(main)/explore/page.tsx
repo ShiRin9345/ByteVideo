@@ -60,35 +60,42 @@ export default function ExplorePage() {
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // 将 VideoItem 转换为 WaterfallItem 格式
+  // 将 VideoItem 转换为 WaterfallItem 格式，并去重
   const waterfallItems = useMemo<WaterfallItem[]>(() => {
-    return videoItems.map((video: VideoItem) => {
-      // 使用封面图作为图片，如果没有则使用占位图
-      const imageUrl = video.coverUrl;
+    // 使用 Map 根据 id 去重
+    const uniqueItemsMap = new Map<string, WaterfallItem>();
 
-      // 使用视频的封面图宽高，如果没有则使用默认值
-      const defaultWidth = 400;
-      const defaultHeight = 600;
-      const width = video.coverWidth ?? defaultWidth;
-      const height = video.coverHeight ?? defaultHeight;
+    for (const video of videoItems) {
+      if (!uniqueItemsMap.has(video.id)) {
+        // 使用封面图作为图片，如果没有则使用占位图
+        const imageUrl = video.coverUrl;
 
-      return {
-        id: video.id,
-        image: imageUrl,
-        width,
-        height,
-        text: video.name,
-        // 保留原始视频数据以便后续使用
-        videoId: video.videoId,
-        name: video.name,
-        theme: video.theme,
-        views: video.views,
-        likes: video.likes,
-        createdAt: video.createdAt,
-        // 传递作者信息
-        author: video.author,
-      };
-    });
+        // 使用视频的封面图宽高，如果没有则使用默认值
+        const defaultWidth = 400;
+        const defaultHeight = 600;
+        const width = video.coverWidth ?? defaultWidth;
+        const height = video.coverHeight ?? defaultHeight;
+
+        uniqueItemsMap.set(video.id, {
+          id: video.id,
+          image: imageUrl,
+          width,
+          height,
+          text: video.name,
+          // 保留原始视频数据以便后续使用
+          videoId: video.videoId,
+          name: video.name,
+          theme: video.theme,
+          views: video.views,
+          likes: video.likes,
+          createdAt: video.createdAt,
+          // 传递作者信息
+          author: video.author,
+        });
+      }
+    }
+
+    return Array.from(uniqueItemsMap.values());
   }, [videoItems]);
 
   const handleClearFilters = useCallback(() => {

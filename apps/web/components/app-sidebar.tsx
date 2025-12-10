@@ -24,6 +24,8 @@ import {
 import { useAuth } from "@/features/auth";
 import { LoginDialog } from "./login-dialog";
 import { ModeToggle } from "./mode-toggle";
+import { AvatarUploadDialog } from "./avatar-upload-dialog";
+import Image from "next/image";
 
 const navigation = [
   { name: "首页", href: "/explore", icon: Home },
@@ -36,6 +38,7 @@ export function AppSidebar() {
   const pathname = usePathname();
   const { user, isAuthenticated, logout } = useAuth();
   const [loginDialogOpen, setLoginDialogOpen] = React.useState(false);
+  const [avatarDialogOpen, setAvatarDialogOpen] = React.useState(false);
 
   const isActive = (href: string) => {
     if (href === "/explore") {
@@ -77,6 +80,9 @@ export function AppSidebar() {
             >
               Byte Video
             </span>
+            <div className="ml-auto">
+              <ModeToggle />
+            </div>
           </div>
         </SidebarHeader>
         <SidebarContent className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2 pt-0 pb-4">
@@ -118,20 +124,25 @@ export function AppSidebar() {
             </SidebarGroup>
           </div>
 
-          {/* 账户部分固定在底部 */}
           <div className="border-sidebar-border mt-auto space-y-2 border-t pt-4">
-            {/* 主题切换 */}
-            <div className="px-2">
-              <ModeToggle />
-            </div>
             {isAuthenticated && user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground w-full rounded-lg px-4 py-2.5 text-base font-medium transition-colors duration-150">
                     <div className="flex w-full items-center gap-3">
-                      <div className="bg-muted flex h-8 w-8 items-center justify-center rounded-full">
-                        <User className="text-muted-foreground h-4 w-4" />
-                      </div>
+                      {user.image ? (
+                        <Image
+                          src={user.image}
+                          alt={user.name || user.username || "用户"}
+                          width={32}
+                          height={32}
+                          className="h-8 w-8 flex-shrink-0 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="bg-muted flex h-8 w-8 items-center justify-center rounded-full">
+                          <User className="text-muted-foreground h-4 w-4" />
+                        </div>
+                      )}
                       <span className="flex-1 truncate">
                         {user.name || user.username || "用户"}
                       </span>
@@ -143,6 +154,12 @@ export function AppSidebar() {
                   side="right"
                   className="w-48 rounded-lg border shadow-md"
                 >
+                  <DropdownMenuItem
+                    onClick={() => setAvatarDialogOpen(true)}
+                    className="w-full cursor-pointer rounded-md px-3 py-2 text-base transition-colors"
+                  >
+                    更换头像
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={async () => {
                       await logout();
@@ -171,8 +188,12 @@ export function AppSidebar() {
         </SidebarContent>
       </Sidebar>
 
-      {/* Login Dialog */}
       <LoginDialog open={loginDialogOpen} onOpenChange={setLoginDialogOpen} />
+
+      <AvatarUploadDialog
+        open={avatarDialogOpen}
+        onOpenChange={setAvatarDialogOpen}
+      />
     </>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { Edit, Text } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
@@ -28,12 +29,18 @@ interface VideoTableProps {
 }
 
 export function VideoTable({ initialData }: VideoTableProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   // 从 URL 查询参数读取分页和筛选条件（用于同步 URL 状态）
   const [page] = useQueryState("page", parseAsString.withDefault("1"));
   const [perPage] = useQueryState("perPage", parseAsString.withDefault("10"));
 
   const pageNum = parseInt(page, 10) || 1;
   const pageSizeNum = parseInt(perPage, 10) || 10;
+
+  // 跳过首次加载
+  const isFirstMount = useRef(true);
 
   // 编辑对话框状态
   const [editingVideo, setEditingVideo] = useState<VideoItem | null>(null);
@@ -169,6 +176,15 @@ export function VideoTable({ initialData }: VideoTableProps) {
     ]),
   );
 
+  // 监听 URL 变化，刷新服务端数据
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+    router.refresh();
+  }, [searchParams, router]);
+
   const { table } = useDataTable({
     data: initialData.items,
     columns,
@@ -182,17 +198,11 @@ export function VideoTable({ initialData }: VideoTableProps) {
 
   return (
     <>
-      {initialData.items.length === 0 ? (
-        <div className="flex min-h-[400px] items-center justify-center">
-          <p className="text-muted-foreground">没有找到相关视频</p>
-        </div>
-      ) : (
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <DataTableSortList table={table} />
-          </DataTableToolbar>
-        </DataTable>
-      )}
+      <DataTable table={table}>
+        <DataTableToolbar table={table}>
+          <DataTableSortList table={table} />
+        </DataTableToolbar>
+      </DataTable>
       <EditVideoDialog
         video={editingVideo}
         open={isEditDialogOpen}
